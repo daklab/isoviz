@@ -1,0 +1,35 @@
+---
+title: "isoviz"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{isoviz}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(isoviz)
+```
+
+# Introduction
+
+This is a package with the functions I use most often in my projects.
+
+# Running summaries
+
+To run a summary for a numeric vector, execute:
+```{r}
+numeric_summary( rnorm (7) )
+```
+
+If you want to see a summary of a character vector:
+```{r}
+char_summary( month.name )
+```
