@@ -31,12 +31,32 @@ require(cowplot)
 
 ```
 
-```{r}
-# generate leafcutter cluster files and store for standard cell types
-# this is publicly available A375 data used to design the screen
+Raw data -> Data for package
+Leafcutter clusters
+Run this on publicly available data for major cell types
+But have function for people to read in their on bam file
 
-# get leafcutter data in proper format
-clusters <- read_tsv("~/isoviz/data-raw/SRR6515912_out-regtools_.junc.a375_m30_p0.01_.sorted", col_names = FALSE, skip = 1) # 15,901
+Defining Intron clustering with Leafcutter
+make a text file with the name of all bed files
+
+# more stringent- better for calling unique clusters
+python ~/Downloads/leafcutter/clustering/leafcutter_cluster_regtools.py -j a375_screen_cells_for_lfc.txt -m 30 -p 0.1 -o a375_screen_cells -l 500000 --includeconst --checkchrom
+
+# less stringent (-m 5) which is better for detecting all singletons
+python ~/Downloads/leafcutter/clustering/leafcutter_cluster_regtools.py -j a375_screen_cells_for_lfc.txt -m 5 -p 0.1 -o a375_screen_cells_5reads -l 500000 --includeconst --checkchrom
+
+output is a text file
+-p MINCLURATIO, --mincluratio=MINCLURATIO
+                        minimum fraction of reads in a cluster that support a
+                        junction (default 0.001)
+                        
+--includeconst
+```{r}
+# This is data from our A375 screen cells and is the most accurate for our work
+# now this includes constitutive exons which have a single junction per cluster
+# required 30 total reads per cluster and junction to be 10% of total
+# total reads in a375-cyt_Aligned.q20.sort.bam: 43,407,715
+clusters <- read_tsv("~/isoviz/data-raw/a375_screen_cells_perind.constcounts.gz", col_names = FALSE, skip = 1) # 59,783
 clusters %<>% 
   separate(X1, into = c("coords", "counts"), sep = " ") %>% 
   separate(counts, into = c("junc.counts", "cluster.counts"), sep = "/", convert = TRUE) %>%
@@ -44,56 +64,67 @@ clusters %<>%
   separate(name, into = c("same", "cluster.n", "extra"), sep = "_") %>% 
   select(-same, -extra)
 
-# remove clusters with no counts, not sure why these are here to begin with- only 7
+# remove clusters with no counts
 # filter out chrM and chrY clusters
 clusters %<>% filter(cluster.counts > 0, chr != "chrY", chr != "chrM") # 15,886
 
-leafcutter_clusters = as.data.table(clusters)
+a375_screen_lfc_clusters = as.data.table(clusters)
+save(a375_screen_lfc_clusters, file = "~/isoviz/data/a375_screen_lfc_clusters.rda")
 
-save(leafcutter_clusters, file = "~/isoviz/data/leafcutter_clusters.rda")
 ```
 
-
+Raw data -> Data for package
+Gene/transcript name conversion file
+Others might want to do this for a different gtf version
 ```{r}
 # could make this a function
 # create gene name conversion file from gtf
-gtf = read_tsv("~/isoviz/data-raw/gencode.v41.basic.annotation.gtf", col_names = FALSE, skip = 5) %>% filter(X3 == "transcript")
-gtf$transcript_id = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[2]])
-gtf$transcript_id = sapply(gtf$transcript_id, gsub, pattern = "transcript_id", replacement = "")
-gtf$transcript_id = sapply(as.character(gtf$transcript_id), gsub, pattern = '"', replacement = '')
-gtf$transcript_id = sapply(as.character(gtf$transcript_id), gsub, pattern = ' ', replacement = '')
 
-gtf$gene_id = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[1]])
-gtf$gene_id = sapply(gtf$gene_id, gsub, pattern = "gene_id", replacement = "")
-gtf$gene_id = sapply(as.character(gtf$gene_id), gsub, pattern = '"', replacement = '')
-gtf$gene_id = sapply(as.character(gtf$gene_id), gsub, pattern = ' ', replacement = '')
+gtf_convert = function(gtf_file){
+  gtf = read_tsv(gtf_file, col_names = FALSE, skip = 5) %>% filter(X3 == "transcript")
 
-gtf$transcript_name = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[6]])
-gtf$transcript_name = sapply(gtf$transcript_name, gsub, pattern = "transcript_name", replacement = "")
-gtf$transcript_name = sapply(as.character(gtf$transcript_name), gsub, pattern = '"', replacement = '')
-gtf$transcript_name = sapply(as.character(gtf$transcript_name), gsub, pattern = ' ', replacement = '')
+  gtf$transcript_id = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[2]])
+  gtf$transcript_id = sapply(gtf$transcript_id, gsub, pattern = "transcript_id", replacement = "")
+  gtf$transcript_id = sapply(as.character(gtf$transcript_id), gsub, pattern = '"', replacement = '')
+  gtf$transcript_id = sapply(as.character(gtf$transcript_id), gsub, pattern = ' ', replacement = '')
 
-gtf$gene_name = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[4]])
-gtf$gene_name = sapply(gtf$gene_name, gsub, pattern = "gene_name", replacement = "")
-gtf$gene_name = sapply(as.character(gtf$gene_name), gsub, pattern = '"', replacement = '')
-gtf$gene_name = sapply(as.character(gtf$gene_name), gsub, pattern = ' ', replacement = '')
+  gtf$gene_id = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[1]])
+  gtf$gene_id = sapply(gtf$gene_id, gsub, pattern = "gene_id", replacement = "")
+  gtf$gene_id = sapply(as.character(gtf$gene_id), gsub, pattern = '"', replacement = '')
+  gtf$gene_id = sapply(as.character(gtf$gene_id), gsub, pattern = ' ', replacement = '')
 
-gtf$gene_type = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[3]])
-gtf$gene_type = sapply(gtf$gene_type, gsub, pattern = "gene_type", replacement = "")
-gtf$gene_type = sapply(as.character(gtf$gene_type), gsub, pattern = '"', replacement = '')
-gtf$gene_type = sapply(as.character(gtf$gene_type), gsub, pattern = ' ', replacement = '')
+  gtf$transcript_name = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[6]])
+  gtf$transcript_name = sapply(gtf$transcript_name, gsub, pattern = "transcript_name", replacement = "")
+  gtf$transcript_name = sapply(as.character(gtf$transcript_name), gsub, pattern = '"', replacement = '')
+  gtf$transcript_name = sapply(as.character(gtf$transcript_name), gsub, pattern = ' ', replacement = '')
 
-gtf$transcript_type = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[5]])
-gtf$transcript_type = sapply(gtf$transcript_type, gsub, pattern = "transcript_type", replacement = "")
-gtf$transcript_type = sapply(as.character(gtf$transcript_type), gsub, pattern = '"', replacement = '')
-gtf$transcript_type = sapply(as.character(gtf$transcript_type), gsub, pattern = ' ', replacement = '')
+  gtf$gene_name = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[4]])
+  gtf$gene_name = sapply(gtf$gene_name, gsub, pattern = "gene_name", replacement = "")
+  gtf$gene_name = sapply(as.character(gtf$gene_name), gsub, pattern = '"', replacement = '')
+  gtf$gene_name = sapply(as.character(gtf$gene_name), gsub, pattern = ' ', replacement = '')
 
-gtf %>% dplyr::select(gene_id, trans_id = transcript_id, gene_name, transcript_name, gene_type, transcript_type) %>% distinct() %>%
-  write_tsv("~/isoviz/data-raw/gencode_v41_gene-transcript-convert.txt", col_names = TRUE)
+  gtf$gene_type = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[3]])
+  gtf$gene_type = sapply(gtf$gene_type, gsub, pattern = "gene_type", replacement = "")
+  gtf$gene_type = sapply(as.character(gtf$gene_type), gsub, pattern = '"', replacement = '')
+  gtf$gene_type = sapply(as.character(gtf$gene_type), gsub, pattern = ' ', replacement = '')
+
+  gtf$transcript_type = sapply(strsplit(as.character(gtf$X9), ";"), function(x) x[[5]])
+  gtf$transcript_type = sapply(gtf$transcript_type, gsub, pattern = "transcript_type", replacement = "")
+  gtf$transcript_type = sapply(as.character(gtf$transcript_type), gsub, pattern = '"', replacement = '')
+  gtf$transcript_type = sapply(as.character(gtf$transcript_type), gsub, pattern = ' ', replacement = '')
+
+  gtf %<>% dplyr::select(gene_id, trans_id = transcript_id, gene_name, transcript_name, gene_type, transcript_type) %>%
+    distinct()
+
+}
+
+output = gtf_convert("~/isoviz/data-raw/gencode.v41.basic.annotation.gtf")
+write_tsv(output, "~/isoviz/data-raw/gencode_v41_gene-transcript-convert.txt", col_names = TRUE)
 
 ```
 
 
+Add this to original genomedata.R script
 ```{r}
 # modify psl file data to include other gene and transcript names
 # currently using gencode basic anntotation file
@@ -106,86 +137,102 @@ save(iso_data_complete, file = "~/isoviz/data/iso_data_complete.rda")
 
 ```
 
-
+Write function to generate intron coords from exon coords- this is currently slow (~30 minutes), can we make the loop more efficient?
 ```{r}
 # make psl with intron coords instead of exon
 # adapted from genomedata.R
 
-mydataset <- fread("~/isoviz/data-raw/gencode.v41.basic.annotation.psl")
+make_intron_coords = function(psl){
+  
+  mydataset <- fread(psl)
 
-mydataset$gene_id = sapply(mydataset$V10, function(x){strsplit(x, "_")[[1]][2]})
-mydataset$trans_id = sapply(mydataset$V10, function(x){strsplit(x, "_")[[1]][1]})
+  mydataset$gene_id = sapply(mydataset$V10, function(x){strsplit(x, "_")[[1]][2]})
+  mydataset$trans_id = sapply(mydataset$V10, function(x){strsplit(x, "_")[[1]][1]})
 
-# Get coordinates for each "block"
-mydataset$blocksizes = sapply(mydataset$V19, function(x){paste(strsplit(x, ",")[[1]], collapse=",")})
-mydataset$blockstarts = sapply(mydataset$V21, function(x){paste(strsplit(x, ",")[[1]], collapse=",")})
-mydataset$strand = mydataset$V9
-mydataset$chr = mydataset$V14
-mydataset$start = mydataset$V16
-mydataset$end = mydataset$V17
-mydataset$transcript_length = mydataset$end - mydataset$start
+  # Get coordinates for each "block"
+  mydataset$blocksizes = sapply(mydataset$V19, function(x){paste(strsplit(x, ",")[[1]], collapse=",")})
+  mydataset$blockstarts = sapply(mydataset$V21, function(x){paste(strsplit(x, ",")[[1]], collapse=",")})
+  mydataset$strand = mydataset$V9
+  mydataset$chr = mydataset$V14
+  mydataset$start = mydataset$V16
+  mydataset$end = mydataset$V17
+  mydataset$transcript_length = mydataset$end - mydataset$start
 
-# Clean up and seperate blocks into rows
-# need to do different adjustments here to get intron coords that will line up with leafcutter
-mydataset = mydataset %>% dplyr::select(chr, start, end, trans_id, gene_id,strand, blocksizes, blockstarts,
+  # Clean up and seperate blocks into rows
+  # need to do different adjustments here to get intron coords that will line up with leafcutter
+  mydataset = mydataset %>% dplyr::select(chr, start, end, trans_id, gene_id,strand, blocksizes, blockstarts,
                             transcript_length) %>% separate_rows(blocksizes, blockstarts)
-mydataset$blockstarts=as.numeric(mydataset$blockstarts)
-mydataset$blocksizes=as.numeric(mydataset$blocksizes)
-mydataset$blockends = mydataset$blockstarts + mydataset$blocksizes
+  mydataset$blockstarts=as.numeric(mydataset$blockstarts)
+  mydataset$blocksizes=as.numeric(mydataset$blocksizes)
+  mydataset$blockends = mydataset$blockstarts + mydataset$blocksizes
 
-transcript_ids = unique(mydataset$trans_id)
-length(transcript_ids) # 116,566
-trans_id = c()
-intron_starts = c()
-intron_ends = c()
+  transcript_ids = unique(mydataset$trans_id)
+  length(transcript_ids) # 116,566
+  trans_id = c()
+  intron_starts = c()
+  intron_ends = c()
+  
+  # this is the part that is slow
+  for(id in transcript_ids){
+    data = mydataset %>% filter(trans_id == id)
+    new_ends = data$blockstarts[-1] + 1
+    len = nrow(data)
+    new_starts = data$blockends[-len]
+    n = len-1
+    trans_id = c(trans_id, rep(id, n))
+    intron_starts = c(intron_starts, new_starts)
+    intron_ends = c(intron_ends, new_ends)
+  }
 
-for(id in transcript_ids){
-  data = mydataset %>% filter(trans_id == id)
-  new_ends = data$blockstarts[-1] + 1
-  len = nrow(data)
-  new_starts = data$blockends[-len]
-  n = len-1
-  trans_id = c(trans_id, rep(id, n))
-  intron_starts = c(intron_starts, new_starts)
-  intron_ends = c(intron_ends, new_ends)
+  # Important note: this no longer has single exon transcripts
+  intron_data = data.frame(trans_id, intron_starts, intron_ends) # 723,230
+
+  convert = read_tsv("~/isoviz/data-raw/gencode_v41_gene-transcript-convert.txt", col_names = TRUE)
+  trans_info = mydataset %>% select(1, 4, 5, 6) %>% distinct() %>% filter(chr != "chrY", chr != "chrM") 
+
+  data = intron_data %>% left_join(trans_info,  by = "trans_id") %>% 
+    left_join(convert, by = c("gene_id", "trans_id")) %>% select(4, 2, 3, 5, 1, 6, 7, 8, 9, 10)
+
+  iso_intron_data = as.data.table(data)
+
 }
 
-# Important note: this no longer has single exon transcripts
-intron_data = data.frame(trans_id, intron_starts, intron_ends) # 723,230
-
-convert = read_tsv("~/isoviz/data-raw/gencode_v41_gene-transcript-convert.txt", col_names = TRUE)
-trans_info = mydataset %>% select(1, 4, 5, 6) %>% distinct() %>% filter(chr != "chrY", chr != "chrM") 
-
-data = intron_data %>% left_join(trans_info,  by = "trans_id") %>% left_join(convert, by = c("gene_id", "trans_id")) %>% select(4, 2, 3, 5, 1, 6, 7, 8, 9, 10)
-
-iso_intron_data = as.data.table(data)
-
+iso_intron_data = make_intron_coords("~/isoviz/data-raw/gencode.v41.basic.annotation.psl")
 save(iso_intron_data, file = "~/isoviz/data/iso_intron_data.rda")
 
 ```
 
-
+Function: Map junction to isoform
 ```{r}
 load(file = "~/isoviz/data/iso_intron_data.rda")
-load(file = "~/isoviz/data/leafcutter_clusters.rda")
+load(file = "~/isoviz/data/a375_screen_lfc_clusters.rda")
+
 
 # map junctions function- for now, it isn't using cell type but eventually we should change this
 map_junction = function(gene = "ENSG00000001167.15", cell_type = "A375"){
   
   # filter for gene, for now, also filter for protein coding transcripts- can set this as a parameter later
-  gene_iso_data = iso_intron_data %>% filter(grepl(gene, gene_id), transcript_type == "protein_coding")
+  gene_iso_data = iso_intron_data %>% filter(grepl(gene, gene_id), transcript_type == "protein_coding") # 17 for NFYA
   
   # join iso data with leafcutter data and mark any unannotated junctions
-  gene_cluster = gene_iso_data %>% left_join(leafcutter_clusters, by = c("chr", "intron_starts" = "start", "intron_ends" = "end")) %>% filter(!is.na(cluster.n))
+  const_junc_list = a375_screen_lfc_clusters %>% 
+    group_by(cluster.n) %>% 
+    tally() %>% filter(n == 1) %>% ungroup()
+  a375_screen_lfc_clusters %<>% mutate(junc.type = ifelse(cluster.n %in% const_junc_list$cluster.n, "Common", "Unique"))
+  gene_cluster = gene_iso_data %>% 
+    left_join(a375_screen_lfc_clusters, by = c("chr", "intron_starts" = "start", "intron_ends" = "end")) %>%
+    filter(!is.na(cluster.n))
+
   gene = unique(gene_cluster$gene_id)
   name = unique(gene_cluster$gene_name)
   gene_strand = unique(gene_cluster$strand)
   cluster_ids = unique(gene_cluster$cluster.n)
-  output = leafcutter_clusters %>% filter(cluster.n %in% cluster_ids) %>% group_by(cluster.n) %>% mutate(junc.per.cluster = n()) %>% 
+  
+  output = a375_screen_lfc_clusters %>% filter(cluster.n %in% cluster_ids) %>% group_by(cluster.n) %>% mutate(junc.per.cluster = n()) %>% 
     left_join(gene_iso_data, by = c("chr", "start" = "intron_starts", "end" = "intron_ends")) %>% 
     mutate(junc.usage = round((junc.counts/cluster.counts)*100, digits = 0), 
-           transcript_name = ifelse(is.na(transcript_name), "Unannotated", transcript_name),
-           trans_id = ifelse(is.na(trans_id), "Unannotated", trans_id),
+           transcript_name = ifelse(is.na(transcript_name), paste0(cluster.n, "_Unannotated"), transcript_name),
+           trans_id = ifelse(is.na(trans_id), paste0(cluster.n, "_Unannotated"), trans_id),
            gene_id = ifelse(is.na(gene_id), gene, gene_id),
            gene_name = ifelse(is.na(gene_name), name, gene_name),
            strand = ifelse(is.na(strand), gene_strand, strand))
@@ -194,26 +241,34 @@ map_junction = function(gene = "ENSG00000001167.15", cell_type = "A375"){
 }
 
 to_plot = map_junction("ENSG00000001167.15") # NFYA
-to_plot = map_junction("ENSG00000100320") # RBFOX2
+to_plot = map_junction("ENSG00000100320") # RBFOX2, alt start is missing because it's intron doesnt overlap another and counts are only 8 so included in consitutive either
+
+# can we ask if all junctions of an isoform are represented to filter isoforms?
+# can we create pseudo regtools output based on all possible junctions and run that through leafcutter to get true common versus unique
 
 ```
 
 ```{r}
 load(file='~/isoviz/data/iso_data_complete.rda')
-to_plot
+df = to_plot
 
 # plot isoform plus leafcutter clusters
-plot_junction_to_isoform = function(to_plot){
-  
-  # get info
-  gene = unique(to_plot$gene_id)
-  name = unique(to_plot$gene_name)
-  transcripts = unique(to_plot$transcript_name)
+plot_junction_to_isoform = function(df, include_common_juncs = FALSE){
   
   # I am copying the plot_isoforms function here, figure out how to integrate these later
+  gene = unique(df$gene_id)
   gene_trans =which(str_detect(iso_data_complete$gene_id, gene))
   gene_data = iso_data_complete[gene_trans,]
+  
+  # filter out common junctions for plotting (default)
+  if(include_common_juncs == FALSE){
+    df %<>% filter(junc.type == "Unique")
+  }
 
+  # get info
+  name = unique(df$gene_name)
+  transcripts = unique(df$transcript_name)
+  
   # filter for transcripts that have junction level data to support
   gene_data %<>% filter(transcript_name %in% transcripts)
 
@@ -231,43 +286,65 @@ plot_junction_to_isoform = function(to_plot){
   order_plot = order_plot %>% dplyr::select(transcript_name, trans_order)
 
   to_plot_ordered = gene_data %>% full_join(order_plot, by = c("transcript_name")) %>%
-    arrange(trans_order, blockstarts) %>%
-    mutate(y1 = trans_order - 0.2, y2 = trans_order + 0.2)
+    arrange(trans_order, blockstarts) 
   to_plot_ordered = to_plot_ordered %>% mutate(seg_end = end)
 
   # make isoform plot
   p1 = ggplot() +
     geom_segment(aes(x = to_plot_ordered$start, y = to_plot_ordered$trans_order,
                      xend = to_plot_ordered$seg_end, yend = to_plot_ordered$trans_order)) +
-    geom_rect(data = to_plot_ordered, mapping = aes(xmin = blockstarts, xmax = blockends, ymin = y1, ymax = y2)) +
+    geom_rect(data = to_plot_ordered, mapping = aes(xmin = blockstarts, xmax = blockends, ymin = trans_order - 0.3, ymax = trans_order + 0.3)) +
     xlim(min_start, max_end) + ylim(0,y_max) +
-    geom_text(aes(x = Inf, y = to_plot_ordered$trans_order, hjust = 0, label = to_plot_ordered$transcript_name)) +
+    geom_text(aes(x = Inf, y = to_plot_ordered$trans_order, hjust = 0, label = to_plot_ordered$transcript_name), size = 3) +
     theme_bw() + ylab("") + xlab("") +
-    theme(axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "top") +
-    ggtitle(paste0(name, " (", to_plot_ordered$strand[1], ")")) +
-    theme(axis.text = element_text(size = 10), plot.title = element_text(hjust = 0.5)) + coord_cartesian(xlim = c(min_start, max_end))
-    #coord_cartesian(clip = 'off')
-    #theme(plot.margin = margin(0.5,1.5,0.5,0.5, "in"))
+    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(), 
+          axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "top", 
+          plot.title = element_text(hjust = 0.5), plot.margin = margin(0.1,1,0,0.1, "in")) +
+    ggtitle(paste0(name, " Junction to Isoform Map (" , to_plot_ordered$strand[1], " strand )")) + 
+    coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
   
-  # new code to plot leafcutter cluster info underneath
-  clusters = unique(to_plot$cluster.n)
-  introns = to_plot %>% select(-gene_id, -trans_id, -gene_name, -transcript_name) %>% distinct() %>% group_by(cluster.n) %>% mutate(junc_order = row_number())
-  p2 = ggplot() + geom_rect(data = introns, mapping = aes(xmin = start, xmax = end, ymin = junc_order - 0.2, ymax = junc_order + 0.2)) + 
-    xlim(min_start, max_end) + theme_bw() + facet_wrap(~ cluster.n, scales = "free_y", ncol = 1, strip.position = "top") + 
-    xlab("Hg38 Genomic Position (bp)") + ylab("") + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
+  # new code to plot leafcutter cluster info underneath isoform level data
+  # aggregate isoform information
+  text = df %>% separate(col = transcript_name, into = c("name", "transcript")) %>% group_by(cluster.n, start, end) %>% 
+    arrange(cluster.n, start, end, transcript) %>%
+    mutate(isoforms = paste0(transcript, collapse = ",")) %>%
+    select(1:5, junc.usage, isoforms) %>% distinct() %>% ungroup() %>% 
+    mutate(text_plot = paste0(junc.counts, " reads (", junc.usage, "%) : ", isoforms))
+  
+  clusters = unique(df$cluster.n)
+  introns = df %>% select(-gene_id, -trans_id, -gene_name, -transcript_name) %>% 
+    distinct() %>% arrange(cluster.n, start)
+  introns$junc.order = 1:nrow(introns)
+  introns %<>% left_join(text)
+  p2 = ggplot() + 
+    geom_rect(data = introns, mapping = aes(xmin = start, xmax = end, ymin = junc.order - 0.2, ymax = junc.order + 0.2, fill = cluster.n)) + 
+    geom_text(data = introns, aes(x = end, y = junc.order, label = text_plot), hjust = 0, size = 3) +
+    xlim(min_start, max_end) + theme_bw() + 
+    xlab("Hg38 Genomic Position (bp)") + ylab("") + 
+    theme(axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "none", plot.margin = margin(0,1,0,0.1, "in")) +
     coord_cartesian(xlim = c(min_start, max_end))
-  
-  plot_grid(p1, p2, ncol = 1, align = "v", rel_heights = c(3, 3))
-  ggsave("~/isoviz/plots/rbfox2_isoform_draft.pdf", width = 8, height = 4)
 
-    # try using pivot for aggregating isoform
-
-
-  
+  # plot dimenstions based on number of isoforms and junctions
+  t = (n + nrow(introns))
+  h = t/2
+  p1_p2 = plot_grid(p1, p2, ncol = 1, align = "v", rel_heights = c(n*0.8, nrow(introns)))
+  #ggsave("~/isoviz/plots/rbfox2_isoforms.pdf", width = 8, height = h)
+  return(p1_p2)
 }
+
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/rbfox2_isoforms.pdf", width = 8, height = 8.5)
 ```
 
 
+```{r}
+to_plot = map_junction("ENSG00000001167.15") # NFYA
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/nfya_isoforms.pdf", width = 8, height = 4)
+
+to_plot = map_junction("ENSG00000100320") # RBFOX2, alt start is missing because it's intron doesnt overlap another and counts are only 8 so included in consitutive either
+plot_junction_to_isoform(to_plot)
+```
 
 
 

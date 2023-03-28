@@ -3,7 +3,9 @@
 .RData
 .Ruserdata
 inst/doc
-data/iso_intron_data.rda
 plots/*
 data-raw/gencode.v41.basic.annotation.gtf
+data-raw/a375_screen_cells*
 data/iso_data_complete.rda
+data/iso_intron_data.rda
+data/iso_exon_data.rda
