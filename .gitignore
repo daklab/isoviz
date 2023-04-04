@@ -6,6 +6,8 @@ inst/doc
 plots/*
 data-raw/gencode.v41.basic.annotation.gtf
 data-raw/a375_screen_cells*
+data-raw/21c_hESC_RB2_empty_perind.constcounts.gz
+data-raw/HEK-NFYA-rep2-empty_perind.constcounts.gz
 data/iso_data_complete.rda
 data/iso_intron_data.rda
 data/iso_exon_data.rda
