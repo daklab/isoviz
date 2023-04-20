@@ -1,6 +1,6 @@
 ---
 title: "Megan's code for Isoviz"
-output: html_notebook
+
 ---
 
 
