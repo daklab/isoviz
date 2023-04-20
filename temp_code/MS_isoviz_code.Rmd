@@ -30,6 +30,8 @@ require(ggpubr)
 require(grid)
 require(gridExtra)
 require(cowplot)
+require(Biostrings)
+require(rempsyc) # for fancy tables: https://cran.r-project.org/web/packages/rempsyc/vignettes/table.html
 
 ```
 
@@ -41,18 +43,33 @@ But have function for people to read in their on bam file
 Defining Intron clustering with Leafcutter
 make a text file with the name of all bed files
 
+module load python/2.7.8
+
+/gpfs/commons/home/mschertzer/knowles_lab/Megan/230320_cas13_validation/junctions
+
 # more stringent- better for calling unique clusters
 python ~/Downloads/leafcutter/clustering/leafcutter_cluster_regtools.py -j a375_screen_cells_for_lfc.txt -m 30 -p 0.1 -o a375_screen_cells -l 500000 --includeconst --checkchrom
 
+# moderate stringency
+python ~/Downloads/leafcutter/clustering/leafcutter_cluster_regtools.py -j 21c_hESC_RB2_empty_for_lfc.txt -m 20 -p 0.01 -o 21c_hESC_RB2_empty_p.01 -l 500000 --includeconst --checkchrom
+
 # less stringent (-m 5) which is better for detecting all singletons
 python ~/Downloads/leafcutter/clustering/leafcutter_cluster_regtools.py -j a375_screen_cells_for_lfc.txt -m 5 -p 0.1 -o a375_screen_cells_5reads -l 500000 --includeconst --checkchrom
+
+python ~/Downloads/leafcutter/clustering/leafcutter_cluster_regtools.py -j 21c_hESC_RB2_empty_for_lfc.txt -m 1 -p 0.01 -o hesc_all_junctions_lfc -l 500000 --includeconst --checkchrom
+
 
 output is a text file
 -p MINCLURATIO, --mincluratio=MINCLURATIO
                         minimum fraction of reads in a cluster that support a
                         junction (default 0.001)
-                        
+-m MINCLUREADS, --minclureads=MINCLUREADS
+                        minimum reads in a cluster (default 30 reads)                       
 --includeconst
+            also include constitutive introns
+
+
+Inputs leafcutter clustering output and outputs formatted table
 ```{r}
 # This is data from our A375 screen cells and is the most accurate for our work
 # now this includes constitutive exons which have a single junction per cluster
@@ -82,8 +99,6 @@ clusters %<>%
   separate(name, into = c("same", "cluster.n", "extra"), sep = "_") %>% 
   select(-same, -extra)
 
-# remove clusters with no counts
-# filter out chrM and chrY clusters
 clusters %<>% filter(cluster.counts > 0, chr != "chrY", chr != "chrM")
 clusters_table = as.data.table(clusters)
 save(clusters_table, file = "~/isoviz/data/HEK293_lfc_clusters.rda")
@@ -109,14 +124,41 @@ clusters %<>%
   separate(name, into = c("same", "cluster.n", "extra"), sep = "_") %>% 
   select(-same, -extra)
 
-# remove clusters with no counts
-# filter out chrM and chrY clusters
 clusters %<>% filter(cluster.counts > 0, chr != "chrY", chr != "chrM")
 clusters_table = as.data.table(clusters)
 save(clusters_table, file = "~/isoviz/data/hESC_lfc_clusters.rda")
 
+# hESC- medium stringent
+clusters <- read_tsv("~/isoviz/data-raw/21c_hESC_RB2_empty_p.01_perind.constcounts.gz", col_names = FALSE, skip = 1)
+clusters %<>% 
+  separate(X1, into = c("coords", "counts"), sep = " ") %>% 
+  separate(counts, into = c("junc.counts", "cluster.counts"), sep = "/", convert = TRUE) %>%
+  separate(coords, into = c("chr", "start", "end", "name"), sep = ":", convert = TRUE) %>% 
+  separate(name, into = c("same", "cluster.n", "extra"), sep = "_") %>% 
+  select(-same, -extra)
+
+clusters %<>% filter(cluster.counts > 0, chr != "chrY", chr != "chrM")
+clusters_table = as.data.table(clusters)
+save(clusters_table, file = "~/isoviz/data/hESC_med_string_lfc_clusters.rda")
 
 ```
+
+# Consider all junction counts and use gencode annotations to define unique versus common
+```{r}
+clusters <- read_tsv("~/isoviz/data-raw/hesc_all_junctions_lfc_perind.constcounts.gz", col_names = FALSE, skip = 1)
+clusters %<>% 
+  separate(X1, into = c("coords", "counts"), sep = " ") %>% 
+  separate(counts, into = c("junc.counts", "cluster.counts"), sep = "/", convert = TRUE) %>%
+  separate(coords, into = c("chr", "start", "end", "name"), sep = ":", convert = TRUE) %>% 
+  separate(name, into = c("same", "cluster.n", "extra"), sep = "_") %>% 
+  select(-same, -extra)
+
+clusters %<>% filter(cluster.counts > 0, chr != "chrY", chr != "chrM")
+clusters_table = as.data.table(clusters)
+save(clusters_table, file = "~/isoviz/data/hESC_all_lfc_junctions.rda")
+
+```
+
 
 Raw data -> Data for package
 Gene/transcript name conversion file
@@ -183,6 +225,7 @@ save(iso_data_complete, file = "~/isoviz/data/iso_data_complete.rda")
 ```
 
 Write function to generate intron coords from exon coords- this is currently slow (~30 minutes), can we make the loop more efficient?
+This is only done for the gencode gtf for now which would be provided, this chunk would only need to run if people had their own gtf they wanted to use
 ```{r}
 # make psl with intron coords instead of exon
 # adapted from genomedata.R
@@ -289,24 +332,127 @@ map_junction = function(gene = "ENSG00000001167.15", cell_type = "HEK293"){
   return(output)
 }
 
-to_plot = map_junction("ENSG00000001167.15") # NFYA
-to_plot = map_junction("ENSG00000100320") # RBFOX2, alt start is missing because it's intron doesnt overlap another and counts are only 8 so included in consitutive either
+#to_plot = map_junction("ENSG00000001167.15") # NFYA
+#to_plot = map_junction("ENSG00000100320") # RBFOX2, alt start is missing because it's intron doesnt overlap another and counts are only 8 so included in consitutive either
 
 # can we ask if all junctions of an isoform are represented to filter isoforms?
 # can we create pseudo regtools output based on all possible junctions and run that through leafcutter to get true common versus unique
 
 ```
 
+Updated Function: Map junction to isoform: Updated to include all junctions and use gencode annotations to mark unique versus common
+How do we incorporate expression here since the hESC data is more deeply sequenced- could combine feature counts when we format the leafcutter output
+```{r}
+# merge with gencode info and predictions from 230411_cas13_paper_figures.Rmd
+# we should probably filter these for things like runs of T's, etc like we did when designing the screen
+# missing 166- which are guides in Harm's screen
+v41_info = read_tsv("~/isoviz/data/gencode_v41_all_junction_guides.txt", col_names = TRUE) %>% 
+  mutate(guide_sequence = as.character(guide_sequence)) # 2,255,040
+predictions = read_csv("/gpfs/commons/groups/knowles_lab/cas13_share/230414_predictions/combined-corrected-predictions-gencode.csv") %>% 
+  select(guide_id, predicted_lfc) # 2,254,874
+
+gencode_intron_all_data = v41_info %>% left_join(predictions, by = "guide_id")
+save(gencode_intron_all_data, file = "~/isoviz/data/gencode_intron_all_data.rda")
+
+
+# this gets read in within function: hESC_all_lfc_junctions.rda
+
+# map junctions function
+# I really don't need the guide info here just the junction info- consider revising and bring the guideRNAs in for another junction
+map_all_junctions = function(gene = "ENSG00000100320", cell_type = "hESC"){
+  
+  # gencode- this is an updated file containing more junction info
+  load(file = "~/isoviz/data/gencode_intron_all_data.rda")
+
+  # filter for gene, for now, no need to filter for protein-coding since this gencode set only contains protein-coding
+  # this now contains all guide information for this gene
+  gene_iso_data = gencode_intron_all_data %>% filter(grepl(gene, gene_id)) 
+  
+  # join iso data with leafcutter data and mark any unannotated junctions
+  # consider cell type
+  lfc_clusters = paste0(cell_type, "_all_lfc_junctions")
+  load(file = paste0("~/isoviz/data/", lfc_clusters, ".rda"))
+  
+  # test
+  clusters_table %>% filter(chr == "chr22" & start > 35738735 & end < 36028824) %>% arrange(desc(start))
+  
+  # since leafcutter junctions dont have gene annotations, need to combine here first
+  gene_cluster = gene_iso_data %>% 
+    left_join(clusters_table, by = c("chr", "junc_start" = "start", "junc_end" = "end"))
+
+  name = unique(gene_cluster$gene_name)
+  gene_strand = unique(gene_cluster$strand)
+
+  # to get information on leafcutter junctions that don't match annotation
+  all_gene_clusters = clusters_table %>% filter(cluster.n %in% gene_cluster$cluster.n) %>% 
+    left_join(gene_iso_data, by = c("chr", "start" = "junc_start", "end" = "junc_end")) %>%
+    filter(is.na(gene_id)) %>% 
+    mutate(gene_name = unique(gene_cluster$gene_name), strand = unique(gene_cluster$strand), 
+           gene_id = unique(gene_cluster$gene_id), junction_category = "unknown", 
+           transcript_isoforms = "unknown", junc_id = paste0("unk", 1:nrow(.))) %>%
+    select(chr, junc_start = start, junc_end = end, everything()) %>%
+    bind_rows(gene_cluster) %>%
+    mutate(junc.counts = ifelse(is.na(cluster.n), 0, junc.counts), cluster.counts = ifelse(is.na(cluster.n), 0, cluster.counts))
+  
+  n = all_gene_clusters %>% distinct(cluster.n, junc_id) %>% group_by(cluster.n) %>% 
+    mutate(junc.per.cluster = ifelse(is.na(cluster.n), 1, n())) %>% ungroup()
+  
+  all_gene_clusters %<>% left_join(n, by = c("cluster.n", "junc_id")) %>%
+    mutate(junc.usage = ifelse(junc.counts == 0, 0, round((junc.counts/cluster.counts)*100, digits = 0)), cell_line = paste0(cell_type))
+  
+  #test
+  all_gene_clusters %>% filter(grepl("209", transcript_isoforms)) %>%
+    select(-guide_start, -guide_end, -guide_sequence, -target_sequence, -guide_id, -predicted_lfc) %>%
+    distinct() %>% arrange(junc_start)
+  
+  # create list of expressed isoforms
+  # the logic is that if an isoform has a fully unique junction with no counts, it is unlikely to be expressed
+  # I want to be careful here since some junctions won't be represented because of technical issues so only eliminate isoforms where none of their unique junctions have counts, avoid filtering on partially unique for now
+  non_expressed_genes = all_gene_clusters %>% select(-guide_start, -guide_end, -guide_sequence, -target_sequence, -guide_id, -predicted_lfc) %>%
+    distinct() %>% separate_longer_delim(transcript_isoforms, delim = ",") %>% group_by(transcript_isoforms, junction_category) %>%
+    mutate(isoform_counts = ifelse(junction_category == "fully_unique", sum(junc.counts), junc.counts)) %>% 
+    filter(junction_category == "fully_unique" & isoform_counts == 0) %>% distinct(transcript_isoforms) %>% ungroup()
+  
+  uniquely_targetable = all_gene_clusters %>% select(-guide_start, -guide_end, -guide_sequence, -target_sequence, -guide_id, -predicted_lfc) %>%
+    distinct() %>% separate_longer_delim(transcript_isoforms, delim = ",") %>% filter(junction_category == "fully_unique") %>%
+    distinct(transcript_isoforms)
+  
+  partially_targetable = all_gene_clusters %>% select(-guide_start, -guide_end, -guide_sequence, -target_sequence, -guide_id, -predicted_lfc) %>%
+    distinct() %>% separate_longer_delim(transcript_isoforms, delim = ",") %>% filter(junction_category == "partial_unique") %>%
+    distinct(transcript_isoforms)
+
+  output = all_gene_clusters %>% select(-guide_start, -guide_end, -guide_sequence, -target_sequence, -guide_id, -predicted_lfc) %>%
+    distinct() %>% separate_longer_delim(transcript_isoforms, delim = ",") %>%
+    mutate(transcript_targetable = ifelse(transcript_isoforms %in% uniquely_targetable$transcript_isoforms, "Uniquely", 
+                                          ifelse(transcript_isoforms %in% partially_targetable$transcript_isoforms, "Partially", "None"))) %>% 
+    mutate(isoform_expressed = ifelse(transcript_isoforms %in% non_expressed_genes$transcript_isoforms, "Unlikely", "Likely"))
+  
+  if(nrow(output) == 0){
+    print(paste0("No junction reads detected for ", name, " in ", cell_type))
+  }
+  
+  return(output)
+}
+
+test = map_all_junctions("ENSG00000100320", cell_type = "hESC")
+test %>% filter(isoform_expressed == "Likely") %>% distinct(transcript_isoforms)
+
+# chr22	35938897	36028240
+```
+
+
+
+
 ```{r}
 load(file='~/isoviz/data/iso_data_complete.rda')
-df = to_plot
+#df = to_plot
 
 # plot isoform plus leafcutter clusters
 plot_junction_to_isoform = function(df, include_common_juncs = FALSE){
   
   # I am copying the plot_isoforms function here, figure out how to integrate these later
   gene = unique(df$gene_id)
-  gene_trans =which(str_detect(iso_data_complete$gene_id, gene))
+  gene_trans = which(str_detect(iso_data_complete$gene_id, gene))
   gene_data = iso_data_complete[gene_trans,]
   
   # filter out common junctions for plotting (default)
@@ -381,8 +527,139 @@ plot_junction_to_isoform = function(df, include_common_juncs = FALSE){
   return(p1_p2)
 }
 
-plot_junction_to_isoform(to_plot)
-ggsave("~/isoviz/plots/rbfox2_isoforms.pdf", width = 8, height = 8.5)
+#plot_junction_to_isoform(to_plot)
+#ggsave("~/isoviz/plots/rbfox2_isoforms.pdf", width = 8, height = 8.5)
+```
+
+Updated plotting to go with all junctions output
+```{r}
+# might have to use regtools if I truly want all junctions
+load(file='~/isoviz/data/iso_data_complete.rda')
+df = test
+
+# plot isoform plus leafcutter clusters
+plot_all_junction_to_isoform = function(df, junction_usage = 5, include_common_juncs = FALSE, filter_expressed_isoforms = TRUE){
+  
+  # filter here based on input parameters
+  if(include_common_juncs == FALSE){
+    df %<>% filter(junction_category != "common")
+  }
+  
+  if(filter_expressed_isoforms == TRUE){
+    df %<>% filter(isoform_expressed == "Likely")
+  }
+  
+  to_remove = df %>% filter(junc.per.cluster == 2 & (junc.usage < junction_usage | junc.usage > (100 - junction_usage)))
+  df %<>% filter(!junc_id %in% to_remove$junc_id, junc.counts > 0)
+
+  # get info after filtering
+  name = unique(df$gene_name)
+  transcripts = unique(df$transcript_isoforms)
+  
+  # filter transcripts for plotting too
+  gene_data = iso_data_complete %>% filter(transcript_name %in% df$transcript_isoforms)
+  
+  # setting parameters for the plot based on length of the gene and number of isoforms
+  length = max(gene_data$end) - min(gene_data$start)
+  min_start = min(gene_data$start)
+  n = gene_data %>% group_by(trans_id) %>% tally() %>% nrow()
+  y_max = n + 1
+  max_end = max(gene_data$end)
+
+  # order the isoforms by length for plotting
+  order_plot = gene_data %>% group_by(transcript_name, transcript_length) %>% tally() %>%
+    dplyr::arrange(desc(transcript_length), desc(n))
+  order_plot$trans_order = 1:nrow(order_plot)
+  order_plot = order_plot %>% dplyr::select(transcript_name, trans_order)
+
+  to_plot_ordered = gene_data %>% full_join(order_plot, by = c("transcript_name")) %>%
+    arrange(trans_order, blockstarts) 
+  to_plot_ordered = to_plot_ordered %>% mutate(seg_end = end)
+
+  # make isoform plot
+  p1 = ggplot() +
+    geom_segment(aes(x = to_plot_ordered$start, y = to_plot_ordered$trans_order,
+                     xend = to_plot_ordered$seg_end, yend = to_plot_ordered$trans_order)) +
+    geom_rect(data = to_plot_ordered, mapping = aes(xmin = blockstarts, xmax = blockends, ymin = trans_order - 0.3, ymax = trans_order + 0.3)) +
+    xlim(min_start, max_end) + ylim(0,y_max) +
+    geom_text(aes(x = Inf, y = to_plot_ordered$trans_order, hjust = 0, label = to_plot_ordered$transcript_name), size = 3) +
+    theme_bw() + ylab("") + xlab("") +
+    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(), 
+          axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "top", 
+          plot.title = element_text(hjust = 0.5), plot.margin = margin(0.1,1,0,0.1, "in")) +
+    ggtitle(paste0(name, " Junction to Isoform Map (" , to_plot_ordered$strand[1], " strand )")) + 
+    coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
+  
+  # new code to plot leafcutter cluster info underneath isoform level data
+  # aggregate isoform information
+  text = df %>% separate(col = transcript_isoforms, into = c("name", "transcript")) %>% 
+    mutate(transcript = ifelse(is.na(transcript), "unknown", transcript)) %>%
+    group_by(cluster.n, junc_id) %>% 
+    arrange(cluster.n, junc_id, transcript) %>%
+    mutate(isoforms = paste0(transcript, collapse = ",")) %>%
+    select(1:5, junc_id, junction_category, junc.usage, isoforms, junc.per.cluster) %>% distinct() %>% ungroup() %>% 
+    mutate(text_plot = paste0(junc.counts, " reads (", junc.usage, "%) : ", isoforms))
+  
+  clusters = unique(df$cluster.n)
+  introns = df %>% select(-gene_id, -gene_name, -transcript_isoforms) %>% 
+    distinct() %>% arrange(cluster.n, junc_start)
+  introns$junc.order = 1:nrow(introns)
+  introns %<>% left_join(text)
+  
+  # for guides - remove this or print out?
+  for_guides = introns %>% filter(grepl("junc", junc_id))
+  
+  p2 = ggplot() + 
+    geom_rect(data = introns, mapping = aes(xmin = junc_start, xmax = junc_end, ymin = junc.order - 0.2, ymax = junc.order + 0.2, fill = cluster.n)) + 
+    geom_text(data = introns, aes(x = junc_end, y = junc.order, label = text_plot), hjust = 0, size = 3) +
+    xlim(min_start, max_end) + theme_bw() + 
+    xlab("Hg38 Genomic Position (bp)") + ylab("") + 
+    geom_text(data = introns, aes(x = Inf, y = junc.order, hjust = 0, label = junc_id), size = 3) + 
+    theme(axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "none", plot.margin = margin(0,1,0,0.1, "in")) +
+    coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
+
+  # plot dimenstions based on number of isoforms and junctions
+  t = (n + nrow(introns))
+  h = t/2
+  p1_p2 = plot_grid(p1, p2, ncol = 1, align = "v", rel_heights = c(n*0.8, nrow(introns)))
+  
+  return(p1_p2)
+}
+
+ggsave("~/isoviz/plots/rbfox2_test.pdf", width = 8, height = h)
+
+#df %>% filter(transcript_isoforms == "RBFOX2-209") %>% arrange(junc_start)
+```
+
+Function to get guide RNA predictions for specific junctions
+```{r}
+# need to read in count information a different way- this is just a quick and dirty method
+# write a function to get expressed junctions/isoforms and call that within functions?
+get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "hESC", guides_per_junction = 2){
+  load(file = "~/isoviz/data/gencode_intron_all_data.rda")
+  gene_guides = gencode_intron_all_data %>% filter(grepl(gene, gene_id))
+  gene_name = unique(gene_guides$gene_name)
+  top_guides = gene_guides %>% filter(junction_category == "partial_unique" | junction_category == "fully_unique") %>%
+    group_by(junc_id) %>% slice_min(predicted_lfc, n = guides_per_junction)
+  
+  # filter junctions based on expression or by junc_id- this is just set up to get an example
+  
+  output = top_guides %>% filter(junc_id %in% for_guides$junc_id) %>% 
+    left_join(for_guides) %>%
+    select(Cluster = cluster.n, JuncID = junc_id, Category = junction_category, Counts = junc.counts, Usage = junc.usage,
+           Isoforms = isoforms, GuideID = guide_id, GuideSeq = guide_sequence, Prediction = predicted_lfc)
+  
+  # output table
+  # don't add sig digits
+  fun <- function(x) {formatC(x, format = "f", digits = 0)}
+
+  return(nice_table(output, col.format.custom = 4:5, format.custom = "fun", 
+                    title = paste0(gene_name, ": Top ", guides_per_junction, " gRNAs per Junction")))
+}
+
+guide_table = get_guide_predictions("ENSG00000100320")
+
+flextable::save_as_docx(guide_table, path = "~/isoviz/plots/230420_rbfox2_guides_table.docx")
 ```
 
 
@@ -397,9 +674,9 @@ plot_junction_to_isoform(to_plot)
 # for height, count rows and divide by 2
 ggsave("~/isoviz/plots/nfya_isoforms_hek293.pdf", width = 8, height = 2)
 
-to_plot = map_junction("ENSG00000001167.15", cell_type = "hESC") 
+to_plot = map_junction("ENSG00000001167.15", cell_type = "hESC_med_string") 
 plot_junction_to_isoform(to_plot)
-ggsave("~/isoviz/plots/nfya_isoforms_hESC.pdf", width = 8, height = 2)
+ggsave("~/isoviz/plots/nfya_isoforms_hESC.pdf", width = 8, height = 5)
 
 # RBFOX2
 to_plot = map_junction("ENSG00000100320", cell_type = "A375") # alt start is missing because it's intron doesnt overlap another and counts are only 8 so included in consitutive either
@@ -409,56 +686,54 @@ to_plot = map_junction("ENSG00000100320", cell_type = "HEK293")
 plot_junction_to_isoform(to_plot)
 ggsave("~/isoviz/plots/rbfox2_isoforms_hek293.pdf", width = 8, height = 9)
 
-to_plot = map_junction("ENSG00000100320", cell_type = "hESC") 
+to_plot = map_junction("ENSG00000100320", cell_type = "hESC_med_string") 
 plot_junction_to_isoform(to_plot)
 ggsave("~/isoviz/plots/rbfox2_isoforms_hESC.pdf", width = 8, height = 8.5)
 
+# PTBP1
+to_plot = map_junction("ENSG00000011304", cell_type = "hESC_med_string") 
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/ptbp1_isoforms_hESC.pdf", width = 8, height = 8.5)
+
+to_plot = map_junction("ENSG00000011304", cell_type = "HEK293") 
+plot_junction_to_isoform(to_plot) # no unique junctions here, fix code
+
+to_plot = map_junction("ENSG00000011304", cell_type = "A375") 
+plot_junction_to_isoform(to_plot) # no unique junctions here
+
+# MKNK2
+to_plot = map_junction("ENSG00000099875", cell_type = "hESC_med_string") 
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/mknk2_isoforms_hESC.pdf", width = 8, height = 4)
+
+to_plot = map_junction("ENSG00000099875", cell_type = "HEK293") 
+plot_junction_to_isoform(to_plot)
+
+to_plot = map_junction("ENSG00000099875", cell_type = "A375") 
+plot_junction_to_isoform(to_plot) 
+
+# HNRNPA1
+to_plot = map_junction("ENSG00000135486", cell_type = "hESC_med_string") 
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/hnrnpa1_isoforms_hESC.pdf", width = 8, height = 5.5)
+
+# HNRNPK
+to_plot = map_junction("ENSG00000165119", cell_type = "hESC_med_string") 
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/hnrnpk_isoforms_hESC.pdf", width = 16, height = 6)
+
+# KHSRP- ENSG00000088247
+to_plot = map_junction("ENSG00000088247", cell_type = "hESC_med_string") 
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/khsrp_isoforms_hESC.pdf", width = 16, height = 6)
+
+# MATR3
+to_plot = map_junction("ENSG00000015479", cell_type = "hESC_med_string") 
+plot_junction_to_isoform(to_plot)
+ggsave("~/isoviz/plots/matr3_isoforms_hESC.pdf", width = 16, height = 6)
+
+
 ```
-
-Generate a junction file of all possible junctions sequences for Andrew to make predictions
-- use gencode psl
-- want to make sure to have junc id that will correspond to leafcutter (can merge by sequence at first)
-- can make this information into a table
-```{r}
-load(file = "~/isoviz/data/iso_intron_data.rda")
-iso_intron_data %>% group_by(transcript_type) %>% tally()
-iso_intron_data %>% group_by(chr) %>% tally()
-iso_intron_data %>% filter(is.na(chr))
-
-# filter for protein coding and lncRNAs
-iso_intron_pc = iso_intron_data %>% filter(transcript_type == "protein_coding" | transcript_type == "lncRNA")
-
-# remove transcript ids and collapse on junction coords
-collapsed_junctions = iso_intron_pc %>% select(-trans_id, -transcript_name, -gene_type, -transcript_type) %>% 
-  distinct() %>% select(chr, start = intron_starts, end = intron_ends, gene_id, gene_name, strand) # 281,880 junctions- how many show any uniqueness?
-
-
-
-
-
-# to address how many annotated isoforms have a truly unique junction
-# first filter the genes with more than one transcript
-iso_intron_pc %>% select(gene_id, trans_id) %>% distinct() # 85,586 transcripts
-n_df = iso_intron_pc %>% select(gene_id, trans_id) %>% distinct() %>% group_by(gene_id) %>% mutate(n_transcripts = n()) %>% ungroup() # 33,413
-gene_list = n_df %>% select(-trans_id) %>% distinct() %>% filter(n_transcripts > 1) %>% select(gene_id) # 17,035 genes have more than 1 isoform
-
-iso_pc_df = iso_intron_pc %>% full_join(n_df) %>% filter(gene_id %in% gene_list$gene_id) %>%
-  group_by(chr, intron_starts, intron_ends, gene_id, strand, gene_name, n_transcripts) %>% mutate(n_trans_per_junc = n(), commonality = round((n_trans_per_junc/n_transcripts)*100, 0)) %>%
-  mutate(junction_category = ifelse(n_trans_per_junc == 1, "fully_unique", ifelse(commonality == 100, "common", "partial_unique"))) %>% ungroup()
-
-# junction level numbers- there are ~50,000 fully unique junctions for pc genes, meaning they belong to a singular isoform
-iso_pc_df %>% select(chr, intron_starts, intron_ends, strand, gene_id, gene_name, gene_type, junction_category) %>% distinct() %>% 
-  group_by(gene_type, junction_category) %>% tally()
-
-# isoform-level, how many isoforms are uniquely targetable
-iso_pc_df %>% filter(junction_category == "fully_unique") %>% select(gene_id, gene_name, trans_id, transcript_name, gene_type) %>% distinct() # 47,657 transcripts are uniquely targetable
-iso_pc_df %>% filter(junction_category == "fully_unique") %>% select(gene_id, gene_name, trans_id, transcript_name, gene_type) %>% distinct() %>%
-  distinct(gene_name) # 16,801 genes
-
-```
-
-
-
 
 
 
