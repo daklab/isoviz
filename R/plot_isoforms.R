@@ -11,7 +11,7 @@ load(file='data/iso_exon_data.rda')
 
 plot_isoforms = function(gene="ENSG00000100320"){
 
-  gene_trans =which(str_detect(genomedata$gene_id, gene))
+  gene_trans = which(str_detect(genomedata$gene_id, gene))
   gene_data = genomedata[gene_trans,]
 
   # setting parameters for the plot based on length of the gene and number of isoforms

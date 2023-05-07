@@ -15,5 +15,13 @@ Depends:
 Suggests: 
     knitr,
     rmarkdown
+Imports:
+    data.table, 
+    ggpubr, 
+    readr,
+    tidyverse,
+    stringr,
+    tidyr,
+    readr
 VignetteBuilder: knitr
 RoxygenNote: 7.2.3

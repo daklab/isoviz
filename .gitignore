@@ -4,5 +4,5 @@
 .Ruserdata
 inst/doc
 plots/*
-data-raw/*
-data/*
+data-raw/*.rda
+data/*.rda
