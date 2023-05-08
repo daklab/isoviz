@@ -24,4 +24,6 @@ Imports:
     tidyr,
     readr
 VignetteBuilder: knitr
+InstData: data/gencode_v41_gene_transcript_convert.txt
+InstData: data/gencode.v41.basic.annotation.psl
 RoxygenNote: 7.2.3
