@@ -29,7 +29,6 @@ leafcutter_one_step = function(juncs) {
   )
 
   g = graph_from_adjacency_matrix(intron_connectivity, "undirected")
-
   components(g)$membership[juncs$idx_start]
 }
 

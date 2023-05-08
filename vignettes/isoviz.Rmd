@@ -51,9 +51,7 @@ We will look at junctions in hESC data. We will first need to run 'minicutter' t
 ```{r}
 
 # load junctions for cell type of interest or input your own
-cell_type="hESC"
-
-#junctions <- 
+junctions <- system.file("data", "hESC-MKNK2-G1_v41_basic.junc", package="isoviz")
 
 # run minicutter to get clusters 
 

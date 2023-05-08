@@ -3,7 +3,7 @@ Type: Package
 Title: Visualize transcript isoforms alongside exon-exon junction counts
 Version: 0.1.0
 Author: Karin Isaev and Megan Schertzer
-Maintainer: The package maintainer <kisaev@nygenome.org>
+Maintainer: <kisaev@nygenome.org>
 Description: Visualize which junctions are being utilized alongside annotated
     transcript isoforms. Find appropriate guide RNAs to target junction for 
     isoform specific knockdown. 
@@ -26,5 +26,5 @@ Imports:
 VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
-          data/hESC_lfc_clusters.rda
+          data/hESC-MKNK2-G1_v41_basic.junc
 RoxygenNote: 7.2.3
