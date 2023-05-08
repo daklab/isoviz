@@ -19,5 +19,5 @@ intron coords (for leafcutter integration) with ENSG/ENST names plus
 meaningful names (ex RBFOX2)
 }
 \examples{
-isoviz_coords("data-raw/gencode.v41.basic.annotation.psl")
+isoviz_coords()
 }
