@@ -5,10 +5,7 @@
 \title{A function for obtaining all necessary coordinates for leafcutter integration
 and plotting isoforms given a gtf file or psl file from long read sequencing}
 \usage{
-isoviz_coords(
-  file_path = "data-raw/gencode.v41.basic.annotation.psl",
-  input_type = "psl"
-)
+isoviz_coords(file_path, input_type = "psl")
 }
 \arguments{
 \item{file_name}{Gencode gtf or psl file}
