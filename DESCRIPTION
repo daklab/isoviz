@@ -25,5 +25,6 @@ Imports:
     readr
 VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
-          data/gencode.v41.basic.annotation.psl
+          data/gencode.v41.basic.annotation.psl,
+          data/hESC_lfc_clusters.rda
 RoxygenNote: 7.2.3

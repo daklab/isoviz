@@ -30,15 +30,32 @@ We start off by loading all our exon and intron coordinates. By default, this wi
 file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
 gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz")
 
-all_coordinates = isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
+all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
 ```
 
 ```{r}
 # Let's look at the exon coordinates 
-#exon_coords = all_coordinates[[1]]
+exon_coords <- all_coordinates[[1]]
+print(head(exon_coords))
 
 # Let's look at the intron coordinates 
-#intron_coords = all_coordinates[[1]]
+intron_coords <- all_coordinates[[2]]
+print(head(intron_coords))
+```
+Let's make a basic plot of the isoforms for the gene RBFOX2. We will first need to load our leafcutter junctions that we obtained by running Regtools extract junctions on our BAM files. You can use one of our preloaded cell types or first run this on your own BAM file and then use as input for this function. 
+We will look at junctions in hESC data. We will first need to run 'minicutter' to cluster the junction coordinates and obtain intron cluster events. 
+
+```{r}
+
+# load junctions for cell type of interest or input your own
+cell_type="hESC"
+
+#junctions <- 
+
+# run minicutter to get clusters 
+
+
+
 ```
 
 
