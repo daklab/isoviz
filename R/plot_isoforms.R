@@ -6,6 +6,7 @@
 #' @examples
 #' plot_isoforms("ENSG00000100320")
 #' @name plot_isoforms
+#' @export
 
 load(file='data/iso_exon_data.rda')
 

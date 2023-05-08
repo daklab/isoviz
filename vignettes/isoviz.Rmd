@@ -34,10 +34,10 @@ We start off by loading all our exon and intron coordinates. By default, this wi
 ```
 
 ```{r}
-#file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
-#gene_trans <- system.file("data", "gencode_v41_gene-transcript-convert.txt", package="isoviz")
+file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
+gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert", package="isoviz")
 
-#all_coordinates = isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
+all_coordinates = isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
 ```
 
 ```{r}

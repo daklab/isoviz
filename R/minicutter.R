@@ -9,6 +9,7 @@
 #' @import tidyverse
 #' @import Matrix
 #' @import igraph
+#' @export
 
 leafcutter_one_step = function(juncs) {
 
