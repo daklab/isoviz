@@ -16,7 +16,7 @@ isoviz_coords = function(file_path,
   if(input_type=="psl"){
 
     #print(paste("The input file being used is"), file_path)
-    genome_data <- fread(file_path)
+    genome_data <- data.table::fread(file_path)
     genome_data$gene_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][2]})
     genome_data$trans_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][1]})
 
