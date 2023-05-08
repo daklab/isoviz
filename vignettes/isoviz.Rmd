@@ -16,9 +16,9 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(isoviz)
-
 library(dplyr)
 library(readr)
+library(ggplot2)
 ```
 
 # Introduction
@@ -54,9 +54,10 @@ We will look at junctions in hESC data. We will first need to run 'minicutter' t
 junctions <- system.file("data", "hESC-MKNK2-G1_v41_basic.junc", package="isoviz")
 
 # run minicutter to get clusters 
-
-
-
+intron_clusts <- isoviz_minicutter(juncs_file = junctions)
 ```
 
+```{r}
+print(head(intron_clusts))
+```
 

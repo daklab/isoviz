@@ -114,7 +114,8 @@ isoviz_minicutter = function(juncs_file, min_junction_reads=1, plot_summary=TRUE
 
   if(plot_summary){
     print("Printing summary of intron-cluster sizes = how many junctions across in clusters")
-    plot_cluster_sizes(juncs)
+    p = plot_cluster_sizes(juncs)
+    print(p)
   }
 
   juncs = juncs %>% calculate_usage_ratios()
@@ -125,7 +126,8 @@ isoviz_minicutter = function(juncs_file, min_junction_reads=1, plot_summary=TRUE
 
   if(plot_summary){
     print("Printing summary of intron-cluster sizes = how many junctions across in clusters")
-    plot_cluster_sizes(juncs_filtered) + ggtitle("Post cluster refinemenet and removing lowly used junctions")
+    p=plot_cluster_sizes(juncs_filtered) + ggtitle("Post cluster refinemenet and removing lowly used junctions")
+    print(p)
   }
 
   return(juncs)
