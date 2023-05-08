@@ -5,10 +5,12 @@
 \title{A function for obtaining all necessary coordinates for leafcutter integration
 and plotting isoforms given a gtf file or psl file from long read sequencing}
 \usage{
-isoviz_coords(file_path, input_type = "psl")
+isoviz_coords(file_path, gene_trans, input_type = "psl")
 }
 \arguments{
-\item{file_name}{Gencode gtf or psl file}
+\item{file_path}{Gencode gtf or psl file}
+
+\item{gene_trans}{Dataframe with ensembl gene and transcript ids and names}
 }
 \value{
 list of exon and intron coordinates in that order.

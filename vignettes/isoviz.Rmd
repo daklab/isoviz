@@ -26,12 +26,14 @@ Our package aims to help quantify and visualize the transcript isoforms that are
 
 We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data. You can also input your own psl file (gtf file as well in the future).  
 ```{r}
-
 #this should be done somewhere else in the package maybe need to re-do git commands
 library(data.table) 
 library(tidyr)
 library(dplyr)
 library(readr)
+```
+
+```{r}
 
 file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
 gene_trans <- system.file("data", "gencode_v41_gene-transcript-convert.txt", package="isoviz")

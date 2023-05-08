@@ -4,12 +4,14 @@
 #' Inputs gencode gtf or psl file, outputs exon coords (for plotting) and
 #' intron coords (for leafcutter integration) with ENSG/ENST names plus
 #' meaningful names (ex RBFOX2)
-#' @param file_name Gencode gtf or psl file
+#' @param file_path Gencode gtf or psl file
+#' @param gene_trans Dataframe with ensembl gene and transcript ids and names
 #' @return list of exon and intron coordinates in that order.
 #' @examples
-#' isoviz_coords("data-raw/gencode.v41.basic.annotation.psl")
+#' isoviz_coords()
 #' @name isoviz_coords
 #' @import data.table
+#' @export
 
 isoviz_coords = function(file_path, gene_trans,
                          input_type="psl"){
