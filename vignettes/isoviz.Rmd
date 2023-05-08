@@ -20,37 +20,32 @@ library(isoviz)
 
 # Introduction
 
-Our package aims to help quantify and visualize the transcript isoforms that are present in your samples. 
+Our package aims to help quantify and visualize the transcript isoforms that are present in your samples.
 
 # Exemplary workflow 
 
 We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data. You can also input your own psl file (gtf file as well in the future).  
 ```{r}
 #this should be done somewhere else in the package maybe need to re-do git commands
-library(data.table) 
-library(tidyr)
-library(dplyr)
-library(readr)
+#library(data.table) 
+#library(tidyr)
+#library(dplyr)
+#library(readr)
 ```
 
 ```{r}
+#file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
+#gene_trans <- system.file("data", "gencode_v41_gene-transcript-convert.txt", package="isoviz")
 
-file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
-gene_trans <- system.file("data", "gencode_v41_gene-transcript-convert.txt", package="isoviz")
-
-all_coordinates = isoviz_coords(file_path, gene_trans,
-                         input_type="psl") #use default genome .psl file  
+#all_coordinates = isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
 ```
 
 ```{r}
 # Let's look at the exon coordinates 
-exon_coords = all_coordinates[[1]]
+#exon_coords = all_coordinates[[1]]
 
 # Let's look at the intron coordinates 
-intron_coords = all_coordinates[[1]]
+#intron_coords = all_coordinates[[1]]
 ```
 
-Note that the exon coordinates will be used to for plotting transcript isoforms and the intron coordinates will be used in conjunction with exon-exon junctions and intron cluster coordinates from leafcutter analysis. 
-```{r}
-char_summary( month.name )
-```
+
