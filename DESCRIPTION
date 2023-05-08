@@ -26,5 +26,6 @@ Imports:
 VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
-          data/hESC-MKNK2-G1_v41_basic.junc
+          data/hESC-MKNK2-G1_v41_basic.junc,
+          figures/rbfox2_hesc_filtered.png
 RoxygenNote: 7.2.3

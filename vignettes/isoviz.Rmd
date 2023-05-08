@@ -57,6 +57,7 @@ junctions <- system.file("data", "hESC-MKNK2-G1_v41_basic.junc", package="isoviz
 intron_clusts <- isoviz_minicutter(juncs_file = junctions)
 ```
 
+Let's take a look at how junctions were grouped into intron clusters. Note, some of these clusters will only contain one junction (singleton). You have the option to change this when running isoviz_minicutter.
 ```{r}
 print(head(intron_clusts))
 ```
