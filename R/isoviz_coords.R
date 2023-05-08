@@ -11,6 +11,9 @@
 #' isoviz_coords()
 #' @name isoviz_coords
 #' @import data.table
+#' @import tidyr
+#' @import dplyr
+#' @import readr
 #' @export
 
 isoviz_coords = function(file_path, gene_trans,
