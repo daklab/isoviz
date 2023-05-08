@@ -19,15 +19,38 @@ You can install the development version of isoviz from [GitHub](https://github.c
 devtools::install_github("daklab/isoviz")
 ```
 
+## Introduction 
+
+Our package aims to help quantify and visualize the transcript isoforms that are present in your samples.
+
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data. You can also input your own psl file (gtf file as well in the future).  
 
 ``` r
 library(isoviz)
 
 ## basic example code
+file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
+gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz")
+
+all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
 ```
+
+#### Let's look at the exon coordinates 
+
+```{r}
+exon_coords <- all_coordinates[[1]]
+print(head(exon_coords))
+``` 
+
+#### Let's look at the intron coordinates 
+
+```{r}
+intron_coords <- all_coordinates[[2]]
+print(head(intron_coords))
+``` 
+
 
 ## Questions or suggestions? 
 

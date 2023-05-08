@@ -61,4 +61,4 @@ Let's take a look at how junctions were grouped into intron clusters. Note, some
 ```{r}
 print(head(intron_clusts))
 ```
-
+Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function.  

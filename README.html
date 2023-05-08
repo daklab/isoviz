@@ -371,13 +371,33 @@ group into leafuctter intron clusters.</p>
 <pre class="r"><code># install.packages(&quot;devtools&quot;)
 devtools::install_github(&quot;daklab/isoviz&quot;)</code></pre>
 </div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Our package aims to help quantify and visualize the transcript
+isoforms that are present in your samples.</p>
+</div>
 <div id="example" class="section level2">
 <h2>Example</h2>
-<p>This is a basic example which shows you how to solve a common
-problem:</p>
+<p>We start off by loading all our exon and intron coordinates. By
+default, this will use ‘gencode.v41.basic annotation’ data. You can also
+input your own psl file (gtf file as well in the future).</p>
 <pre class="r"><code>library(isoviz)
 
-## basic example code</code></pre>
+## basic example code
+file_path &lt;- system.file(&quot;data&quot;, &quot;gencode.v41.basic.annotation.psl&quot;, package=&quot;isoviz&quot;)
+gene_trans &lt;- system.file(&quot;data&quot;, &quot;gencode_v41_gene_transcript_convert.txt&quot;, package=&quot;isoviz&quot;)
+
+all_coordinates &lt;- isoviz_coords(file_path, gene_trans, input_type=&quot;psl&quot;) #use default genome .psl file  </code></pre>
+<div id="lets-look-at-the-exon-coordinates" class="section level4">
+<h4>Let’s look at the exon coordinates</h4>
+<pre class="{r}"><code>exon_coords &lt;- all_coordinates[[1]]
+print(head(exon_coords))</code></pre>
+</div>
+<div id="lets-look-at-the-intron-coordinates" class="section level4">
+<h4>Let’s look at the intron coordinates</h4>
+<pre class="{r}"><code>intron_coords &lt;- all_coordinates[[2]]
+print(head(intron_coords))</code></pre>
+</div>
 </div>
 <div id="questions-or-suggestions" class="section level2">
 <h2>Questions or suggestions?</h2>
