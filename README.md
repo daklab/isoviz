@@ -51,6 +51,79 @@ intron_coords <- all_coordinates[[2]]
 print(head(intron_coords))
 ``` 
 
+#### Let's make a basic plot of the isoforms for the gene RBFOX2
+
+```{r}
+# get exons and introns 
+rbfox2_exons <- filter(exon_coords, gene_name == "RBFOX2")
+rbfox2_introns <- filter(intron_coords, gene_name == "RBFOX2")
+``` 
+
+#### Intron re-scaling 
+Let's rescale the intron coordinates but keep the relative exon alignments this step will return an updated dataframe of exon coordinates that we can use with our plotting function. 
+
+```{r}
+rescaled_coords = isoviz_rescale_introns(rbfox2_introns, rbfox2_exons, width_rescale=10) 
+```
+
+#### Intron clustering using junction count data from BAM files
+We will first need to load our leafcutter junctions that we obtained by running Regtools extract junctions on our BAM files. You can use one of our preloaded cell types or first run this on your own BAM file and then use as input for this function. We will look at junctions in hESC data. We will first need to run 'minicutter' to cluster the junction coordinates and obtain intron cluster events.
+
+```{r}
+
+# load junctions for cell type of interest or input your own
+junctions <- system.file("data", "hESC-MKNK2-G1_v41_basic.junc", package="isoviz")
+
+# run minicutter to get clusters 
+intron_clusts <- isoviz_minicutter(juncs_file = junctions)
+print(head(intron_clusts))
+```
+Let's take a look at how junctions were grouped into intron clusters. Note, some of these clusters will only contain one junction (singleton). You will have the option to change this when running isoviz_minicutter.
+
+```{r}
+# For now we will use the expanded intron dataset with additional annotations by Megan 
+# We will need an additional function to add these annotations 
+intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package="isoviz")
+load(intron_annotations)
+```
+
+#### Plotting isoforms and junction and cluster information
+
+Let's continue working on RBFOX2. Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. Make sure to check strand of gene!
+
+```{r}
+mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intron_clusts, gencode_intron_all_data)
+print(head(mapped_junctions))
+```
+Now we are ready to make a plot! 
+```{r}
+isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons,
+                                    cell_type = "hESC",
+                                    junction_usage = 5, #min junc usage to be included 
+                                    include_all_juncs = FALSE,
+                                    include_specific_junctions = c("JUNC00193787", "JUNC00193785", "JUNC00193786", "unk.7"))
+  
+```
+
+<img src="inst/figures/Readme_RBFOX2.png" width="100%" />
+
+## Citation
+``` r
+citation("isoviz")
+#> 
+#> To cite package ‘isoviz’ in publications use:
+#>
+#>  Isaev K, Schertzer M (2023). _isoviz: Visualize transcript isoforms alongside exon-exon junction counts_. R package version 0.1.0.
+#>
+#> A BibTeX entry for LaTeX users is
+#>
+#>  @Manual{,
+#>    title = {isoviz: Visualize transcript isoforms alongside exon-exon junction counts},
+#>    author = {Karin Isaev and Megan Schertzer},
+#>    year = {2023},
+#>    note = {R package version 0.1.0},
+#>  }
+```
 
 ## Questions or suggestions? 
 
