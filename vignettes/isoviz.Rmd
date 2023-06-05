@@ -77,8 +77,8 @@ Let's take a look at how junctions were grouped into intron clusters. Note, some
 ```{r}
 # For now we will use the expanded intron dataset with additional annotations by Megan 
 # We will need an additional function to add these annotations 
-#intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package="isoviz")
-#load(intron_annotations)
+intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package="isoviz")
+load(intron_annotations)
 ```
 
 Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. \* Make sure to check strand of gene.
