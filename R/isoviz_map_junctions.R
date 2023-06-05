@@ -1,11 +1,12 @@
 #' A function for mapping junctions to transcript isoforms
-#' @param intron_coords description
+#' @param gene_intron_coords obtained intron coordinates for gene of interest
 #' @param leafcutter_input output from running isoviz_minicutter
 #' @param cell_type cell type of interest, default=hESC
+#' @param gencode_intron_all_data expanded annotations of introns/transcripts
 #' @return mapping
 #' @examples
-#' isoviz_plot_juncs_to_iso()
-#' @name isoviz_plot_juncs_to_iso
+#' isoviz_map_junctions()
+#' @name isoviz_map_junctions
 #' @import data.table
 #' @export
 
@@ -15,7 +16,7 @@ library(GenomicFeatures)
 library(tidyr)
 
 # map junctions function
-map_all_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_input){
+isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_input, gencode_intron_all_data){
 
   # join intron_coords with leafcutter data and mark any unannotated junctions
   juncs_recluster = leafcutter_input
@@ -29,6 +30,10 @@ map_all_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_
   gene_cluster = gene_iso_data %>%
     left_join(juncs_recluster, by = c("chr" = "chrom", "intron_starts" = "start", "intron_ends" = "end", "strand")) %>%
     arrange(cluster_idx) # 24
+
+  # get additional columns from the gencode_intron_all_data file
+  gene_cluster = gene_cluster %>%
+    left_join(gencode_intron_all_data, by=c("chr" = "chr", "intron_starts" = "junc_start", "intron_ends"="junc_end", "strand", "gene_id", "gene_name", "gene_type"))
 
   name = unique(gene_cluster$gene_name)
   gene_id = unique(gene_cluster$gene_id)
@@ -59,16 +64,14 @@ map_all_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_
   # of technical issues so only eliminate isoforms where none of their unique
   # junctions have counts, avoid filtering on partially unique for now
 
-  # assign junction categories, fully_unique, partial_unique, common...?
-
   non_expressed_genes = all_gene_clusters %>%
-    separate_longer_delim(transcript_name, delim = ",") %>% group_by(transcript_name, junction_category) %>%
+    separate_longer_delim(transcript_isoforms, delim = ",") %>% dplyr::group_by(transcript_isoforms, junction_category) %>%
     mutate(isoform_counts = ifelse(junction_category == "fully_unique", sum(junc.counts), junc.counts)) %>%
-    filter(junction_category == "fully_unique" & isoform_counts == 0) %>% distinct(transcript_name) %>% ungroup()
+    filter(junction_category == "fully_unique" & isoform_counts == 0) %>% distinct(transcript_isoforms) %>% ungroup()
 
   uniquely_targetable = all_gene_clusters %>%
-    separate_longer_delim(transcript_name, delim = ",") %>% filter(junction_category == "fully_unique") %>%
-    distinct(transcript_name)
+    separate_longer_delim(transcript_isoforms, delim = ",") %>% filter(junction_category == "fully_unique") %>%
+    distinct(transcript_isoforms)
 
   partially_targetable = all_gene_clusters %>%
     separate_longer_delim(transcript_isoforms, delim = ",") %>% filter(junction_category == "partial_unique") %>%
@@ -78,7 +81,10 @@ map_all_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_
     separate_longer_delim(transcript_isoforms, delim = ",") %>%
     mutate(transcript_targetable = ifelse(transcript_isoforms %in% uniquely_targetable$transcript_isoforms, "Uniquely",
                                           ifelse(transcript_isoforms %in% partially_targetable$transcript_isoforms, "Partially", "None"))) %>%
-    mutate(isoform_expressed = ifelse(transcript_isoforms %in% non_expressed_genes$transcript_isoforms, "Unlikely", "Likely")) # 135
+    mutate(isoform_expressed = ifelse(transcript_isoforms %in% non_expressed_genes$transcript_isoforms, "Unlikely", "Likely"))
+
+  output$output_id = NULL
+  output = unique(output)
 
   if(nrow(output) == 0){
     print(paste0("No junction reads detected for ", name, " in ", cell_type))

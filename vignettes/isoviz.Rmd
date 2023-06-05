@@ -79,7 +79,23 @@ Let's take a look at how junctions were grouped into intron clusters. Note, some
 # We will need an additional function to add these annotations 
 intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package="isoviz")
 load(intron_annotations)
+print(head(gencode_intron_all_data))
 ```
 
-Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. \* Make sure to check strand of gene.
+Let's continue working on RBFOX2. Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. Make sure to check strand of gene!
+
+```{r}
+mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intron_clusts, gencode_intron_all_data)
+print(head(mapped_junctions))
+```
+
+Now we are ready to make a plot! 
+```{r}
+isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons,
+                                    cell_type = "hESC",
+                                    junction_usage = 5, #min junc usage to be included 
+                                    include_all_juncs = FALSE,
+                                    include_specific_junctions = c("JUNC00193787", "JUNC00193785", "JUNC00193786", "unk.7"))
+  
+```
 
