@@ -6,3 +6,9 @@ inst/doc
 plots/*
 data-raw/*.rda
 data/*.rda
+.DS_Store
+.Rbuildignore
+README.html
+isoviz.Rproj
+isoviz.png
+isoviz_logo.R
