@@ -11,6 +11,9 @@
 #' isoviz_plot_juncs_to_iso()
 #' @name isoviz_plot_juncs_to_iso
 #' @import data.table
+#' @import magrittr
+#' @import ggsci
+#' @import cowplot
 #' @export
 
 library(data.table)

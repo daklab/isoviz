@@ -25,7 +25,10 @@ Imports:
     readr,
     Matrix,
     dplyr, 
-    igraph
+    igraph,
+    magrittr,
+    ggsci,
+    cowplot
 VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
