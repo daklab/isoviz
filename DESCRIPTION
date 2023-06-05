@@ -22,7 +22,10 @@ Imports:
     tidyverse,
     stringr,
     tidyr,
-    readr
+    readr,
+    Matrix,
+    dplyr, 
+    igraph
 VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
