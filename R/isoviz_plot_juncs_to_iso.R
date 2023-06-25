@@ -24,8 +24,11 @@ library(ggsci)
 library(cowplot)
 
 isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
+                                    gene_introns,
                                     cell_type = "hESC",
-                                    junction_usage = 5,
+                                    junc_usage = 5,
+                                    intron_scale = "no",
+                                    intron_scale_width = 10,
                                     include_all_juncs = TRUE,
                                     include_specific_junctions = c()){
 
@@ -37,12 +40,12 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     if(length(include_specific_junctions) == 0){
       stop("Must include list of junctions if include_all_juncs == FALSE")
     } else{
-      df %<>% filter(name %in% include_specific_junctions)
+      df %<>% filter(junc_id %in% include_specific_junctions)
     }
   }
 
   # filter based on junction usage
-  df %<>% filter(junc.usage >= junction_usage)
+  df = dplyr::filter(df, junc.usage >= junc_usage)
 
   # setting parameters for the plot based on length of the gene and number of isoforms
   length = max(gene_data$end) - min(gene_data$start)
@@ -76,22 +79,22 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
 
   # code to plot leafcutter cluster info underneath isoform level data
   # aggregate isoform information
-  df$junc_id = df$name
-  df$name = NULL
+  #df$junc_id = df$name sticking to the original junc_id from Megan's gencode file
+  #df$name = NULL
   df = unique(df)
 
   text = df %>% tidyr::separate(col = transcript_name, into = c("name", "transcript")) %>%
     mutate(transcript = ifelse(is.na(transcript), "unknown", transcript)) %>%
     group_by(cluster_idx, junc_id) %>%
     arrange(cluster_idx, junc_id, transcript) %>%
-    mutate(isoforms = toString(unique(transcript))) %>%
+    dplyr::mutate(isoforms = toString(unique(transcript))) %>%
     dplyr::select(1:5, junc_id, junction_category, junc.usage, isoforms, junc.per.cluster) %>% dplyr::distinct() %>% ungroup() %>%
-    mutate(text_plot = paste0(junc.counts, " reads (", junc.usage, "%) : ", isoforms), alpha = junc.usage/100)
+    dplyr::mutate(text_plot = paste0(junc.counts, " reads (", junc.usage, "%) : ", isoforms), alpha = junc.usage/100)
 
   text = unique(text)
   clusters = unique(df$cluster_idx)
 
-  introns = df %>% select(-gene_id, -gene_name, -transcript_isoforms, -transcript_targetable, -isoform_expressed) %>%
+  introns = df %>% dplyr::select(-gene_id, -gene_name, -transcript_isoforms, -transcript_targetable, -isoform_expressed) %>%
     distinct() %>% arrange(cluster_idx, junc.usage)
   introns %<>% left_join(text)
 

@@ -18,43 +18,49 @@ library(tidyr)
 # map junctions function
 isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_input, gencode_intron_all_data){
 
+  # note make sure to use the junction IDs from the gencode_intron_all_data file
   # join intron_coords with leafcutter data and mark any unannotated junctions
   juncs_recluster = leafcutter_input
+  juncs_recluster$name = NULL
+  print("removing junction IDs obtained from clustering introns, using default names from gencode file")
 
   # intron_coords rename columns
   gene_iso_data = gene_intron_coords
 
-  juncs_recluster %<>% dplyr::select(everything(), junc.counts = readcount) %>% group_by(cluster_idx) %>% mutate(cluster.counts = sum(junc.counts)) %>% ungroup()
+  # get total counts for clusters across their junctions
+  juncs_recluster %<>% dplyr::select(everything(), junc.counts = readcount) %>% dplyr::group_by(cluster_idx) %>% dplyr::mutate(cluster.counts = sum(junc.counts)) %>% ungroup()
 
   # since leafcutter junctions dont have gene annotations, need to combine here first
   gene_cluster = gene_iso_data %>%
     left_join(juncs_recluster, by = c("chr" = "chrom", "intron_starts" = "start", "intron_ends" = "end", "strand")) %>%
-    arrange(cluster_idx) # 24
+    arrange(cluster_idx)
 
   # get additional columns from the gencode_intron_all_data file
   gene_cluster = gene_cluster %>%
     left_join(gencode_intron_all_data, by=c("chr" = "chr", "intron_starts" = "junc_start", "intron_ends"="junc_end", "strand", "gene_id", "gene_name", "gene_type"))
 
+  # the column 'transcript_isoforms' has pre-mapped transcript isoforms that map those junctions/introns
   name = unique(gene_cluster$gene_name)
   gene_id = unique(gene_cluster$gene_id)
   gene_strand = unique(gene_cluster$strand)
 
-  # to get information on leafcutter junctions that don't match annotation
-  all_gene_clusters = juncs_recluster %>% filter(cluster_idx %in% gene_cluster$cluster_idx) %>%
+  # to get information on leafcutter junctions that don't match annotation, still need to plot them
+  # but they just won't get transcripts assigned to them
+  all_gene_clusters = juncs_recluster %>% dplyr::filter(cluster_idx %in% gene_cluster$cluster_idx) %>%
     left_join(gene_iso_data, by = c("chrom" = "chr", "start" = "intron_starts", "end" = "intron_ends", "strand")) %>%
     filter(is.na(gene_id)) %>%
     dplyr::mutate(gene_name = unique(gene_cluster$gene_name), strand = unique(gene_cluster$strand),
            gene_id = unique(gene_cluster$gene_id), junction_category = "unknown",
-           trans_id = "unknown", name = paste0("unk.", row_number())) %>%
+           trans_id = "unknown", junc_id = paste0("unk.", row_number())) %>%
     dplyr::select(chr = chrom, intron_starts = start, intron_ends = end, everything()) %>%
     bind_rows(gene_cluster) %>%
-    mutate(junc.counts = ifelse(is.na(cluster_idx), 0, junc.counts), cluster.counts = ifelse(is.na(cluster_idx), 0, cluster.counts)) %>%
+    dplyr::mutate(junc.counts = ifelse(is.na(cluster_idx), 0, junc.counts), cluster.counts = ifelse(is.na(cluster_idx), 0, cluster.counts)) %>%
     arrange(cluster_idx)
 
-  n = all_gene_clusters %>% distinct(cluster_idx, name) %>% dplyr::group_by(cluster_idx) %>%
+  n = all_gene_clusters %>% distinct(cluster_idx, junc_id) %>% dplyr::group_by(cluster_idx) %>%
     dplyr::mutate(junc.per.cluster = ifelse(is.na(cluster_idx), 1, n())) %>% dplyr::ungroup()
 
-  all_gene_clusters %<>% left_join(n, by = c("cluster_idx", "name")) %>%
+  all_gene_clusters %<>% left_join(n, by = c("cluster_idx", "junc_id")) %>%
     mutate(junc.usage = ifelse(junc.counts == 0, 0, round((junc.counts/cluster.counts)*100, digits = 0)), cell_line = paste0(cell_type))
 
   # create list of expressed isoforms
