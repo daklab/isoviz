@@ -28,7 +28,7 @@ library(GenomicFeatures)
 #exons = rbfox2_exons
 
 isoviz_rescale_introns = function(introns, exons,
-                          width_rescale=50) {
+                                  width_rescale=50) {
 
   # very important to consider strand!
   strand = introns$strand[1]
@@ -60,7 +60,7 @@ isoviz_rescale_introns = function(introns, exons,
   transcripts_names = unique(introns$transcript_name)
 
   if(strand == "-"){
-  starts = starts[order(-start)]}
+    starts = starts[order(-start)]}
 
   z = which(starts$start == starts$start[1])
   starts$new_starts = ""
@@ -107,57 +107,57 @@ isoviz_rescale_introns = function(introns, exons,
     # of the most upstream transcript
 
     if(ref=="ref"){ # for reference transcript only
-    exons_remake$new_e_start = starts[starts$transcript_name == trans_name]$start - starts$start[1]
-    exons_remake$new_e_start = abs(as.numeric(exons_remake$new_e_start))
-    exons_remake$new_e_end =  exons_remake$new_e_start + exons_remake$blocksizes[1]
-    print("getting ref coordinates")
-    for (i in 2:nrow(exons_remake)){
-      # update the other exons
-      exons_remake$new_e_start[i] = exons_remake$new_e_end[i-1] + introns_shortened$rescaled_length[i-1]
-      exons_remake$new_e_end[i] = exons_remake$new_e_start[i] + exons_remake$blocksizes[i]}
+      exons_remake$new_e_start = starts[starts$transcript_name == trans_name]$start - starts$start[1]
+      exons_remake$new_e_start = abs(as.numeric(exons_remake$new_e_start))
+      exons_remake$new_e_end =  exons_remake$new_e_start + exons_remake$blocksizes[1]
+      print("getting ref coordinates")
+      for (i in 2:nrow(exons_remake)){
+        # update the other exons
+        exons_remake$new_e_start[i] = exons_remake$new_e_end[i-1] + introns_shortened$rescaled_length[i-1]
+        exons_remake$new_e_end[i] = exons_remake$new_e_start[i] + exons_remake$blocksizes[i]}
 
-    exons_remake$new_transcript_length = max(exons_remake$new_e_end) - min(exons_remake$new_e_start)
-    exons_remake$new_start = min(exons_remake$new_e_start)
-    exons_remake$new_end = max(exons_remake$new_e_end)
-    exons_remake = exons_remake %>% dplyr::select(chr, new_e_start, new_e_end, strand, new_start, new_end, start, end, transcript_name, blocksizes)
+      exons_remake$new_transcript_length = max(exons_remake$new_e_end) - min(exons_remake$new_e_start)
+      exons_remake$new_start = min(exons_remake$new_e_start)
+      exons_remake$new_end = max(exons_remake$new_e_end)
+      exons_remake = exons_remake %>% dplyr::select(chr, new_e_start, new_e_end, strand, new_start, new_end, start, end, transcript_name, blocksizes)
     }
 
     # for non reference transcripts, figure out which positions in transcript
     # are the same as reference
 
     else{
-    exons_remake$new_e_start <- NA
-    exons_remake$new_e_end <- NA
+      exons_remake$new_e_start <- NA
+      exons_remake$new_e_end <- NA
 
-    for (i in 1:nrow(exons_remake)) {
-      # Find matching row(s) in ref based on start or end position
-      matching_row_start = ref_trans$start == exons_remake$start[i]
-      match_row_end = ref_trans$end == exons_remake$end[i]
+      for (i in 1:nrow(exons_remake)) {
+        # Find matching row(s) in ref based on start or end position
+        matching_row_start = ref_trans$start == exons_remake$start[i]
+        match_row_end = ref_trans$end == exons_remake$end[i]
 
-      # Check if any matching row(s) found
-      if (any(matching_row_start)) {
-        # Assign corresponding new_e_start and new_e_end values to exons_remake
-        exons_remake$new_e_start[i] <- ref_trans$new_e_start[matching_row_start]
+        # Check if any matching row(s) found
+        if (any(matching_row_start)) {
+          # Assign corresponding new_e_start and new_e_end values to exons_remake
+          exons_remake$new_e_start[i] <- ref_trans$new_e_start[matching_row_start]
+        }
+        if (any(match_row_end)) {
+          # Assign corresponding new_e_start and new_e_end values to exons_remake
+          exons_remake$new_e_end[i] <- ref_trans$new_e_end[match_row_end]
+        }
       }
-      if (any(match_row_end)) {
-        # Assign corresponding new_e_start and new_e_end values to exons_remake
-        exons_remake$new_e_end[i] <- ref_trans$new_e_end[match_row_end]
-      }
-    }
     }
 
     exons_remake$exon_num = 1:nrow(exons_remake)
     return(exons_remake)
-    }
+  }
 
   # first get new coords for ref_trans
   ref = .get_rescaled_txs(ref_transcript, ref="ref")
   unref_trans=transcripts_names[-which(transcripts_names == ref_transcript)]
   ref_attach_to = ref
   ref_attach_to$new_end = NULL
-  colnames(ref_attach_to) = c("chr", "start", "end", "strand", "blocksizes",
-                              "transcript_name" , "new_start","new_e_start",
-                              "new_e_end", "exon_num")
+  #colnames(ref_attach_to) = c("chr", "start", "end", "strand", "blocksizes",
+   #                           "transcript_name" , "new_start","new_e_start",
+    #                          "new_e_end", "exon_num")
   ref_attach_to = ref_attach_to[1,]
   ref_attach_to[1,] = 0
 
@@ -183,40 +183,40 @@ isoviz_rescale_introns = function(introns, exons,
 
   if(!(dim(nas)[1] == 0)){
 
-  z = which(is.na(ref_attach_to$new_e_start))
-  ref_attach_to = ref_attach_to[-z,]
-  nas = nas[order(-exon_num)]
+    z = which(is.na(ref_attach_to$new_e_start))
+    ref_attach_to = ref_attach_to[-z,]
+    nas = nas[order(-exon_num)]
 
-  for(i in 1:nrow(nas)){
-    print(i)
-    trans = nas$transcript_name[i]
-    exons = filter(ref_attach_to, transcript_name == trans) #all the non NA exons
-    exon_n = nas$exon_num[i]
-    introns_shortened = filter(int_g, transcript_name == trans)
-    if (strand == "-"){
-      introns_shortened = introns_shortened[order(-start)]
-      exons = exons[order(-start)]}
-    if (strand == "+"){
-      introns_shortened = introns_shortened[order(start)]
-      exons = exons[order(start)]}
-    introns_shortened$intron_num = 1:nrow(introns_shortened)
+    for(i in 1:nrow(nas)){
+      print(i)
+      trans = nas$transcript_name[i]
+      exons = filter(ref_attach_to, transcript_name == trans) #all the non NA exons
+      exon_n = nas$exon_num[i]
+      introns_shortened = filter(int_g, transcript_name == trans)
+      if (strand == "-"){
+        introns_shortened = introns_shortened[order(-start)]
+        exons = exons[order(-start)]}
+      if (strand == "+"){
+        introns_shortened = introns_shortened[order(start)]
+        exons = exons[order(start)]}
+      introns_shortened$intron_num = 1:nrow(introns_shortened)
 
-    # get rescaled length of NA exon and next exon
-    val_intron = filter(introns_shortened, intron_num == exon_n)$rescaled_length
-    next_start = filter(exons, exon_num == exon_n + 1)$new_e_start
+      # get rescaled length of NA exon and next exon
+      val_intron = filter(introns_shortened, intron_num == exon_n)$rescaled_length
+      next_start = filter(exons, exon_num == exon_n + 1)$new_e_start
 
-    if(length(val_intron)==0){ #most likely last exon
-      val_intron = filter(introns_shortened, intron_num == exon_n-1)$rescaled_length
-      prev_end = filter(exons, exon_num == exon_n -1)$new_e_end #actually previous end
-      if(!(is.na(prev_end))){
-        new_e_start = prev_end + val_intron
-        nas$new_e_start[i]= new_e_start
-        nas$new_e_end[i] = nas$new_e_start[i] + nas$blocksizes[i]
-        ref_attach_to = rbind(ref_attach_to, nas[i])
+      if(length(val_intron)==0){ #most likely last exon
+        val_intron = filter(introns_shortened, intron_num == exon_n-1)$rescaled_length
+        prev_end = filter(exons, exon_num == exon_n -1)$new_e_end #actually previous end
+        if(!(is.na(prev_end))){
+          new_e_start = prev_end + val_intron
+          nas$new_e_start[i]= new_e_start
+          nas$new_e_end[i] = nas$new_e_start[i] + nas$blocksizes[i]
+          ref_attach_to = rbind(ref_attach_to, nas[i])
+        }
       }
-    }
 
-    if(!(length(next_start)==0)){
+      if(!(length(next_start)==0)){
         new_e_ending = next_start - val_intron
         nas$new_e_end[i]= new_e_ending
         nas$new_e_start[i] = nas$new_e_end[i] - nas$blocksizes[i]
@@ -228,11 +228,14 @@ isoviz_rescale_introns = function(introns, exons,
   ref_attach_to$new_start = NULL
   ref = ref %>% dplyr::select(chr, start, end, strand, blocksizes, transcript_name, new_e_start, new_e_end, exon_num)
   ref_attach_to = rbind(ref_attach_to, ref)
+
   min_starts = ref_attach_to %>% dplyr::group_by(transcript_name) %>% dplyr::summarize(min_start = min(new_e_start))
   max_exons = ref_attach_to %>% dplyr::group_by(transcript_name) %>% dplyr::summarize(max_end = max(new_e_end))
+
   trans_lengths = merge(min_starts, max_exons)
+
   ref_attach_to = merge(ref_attach_to, trans_lengths)
   ref_attach_to$transcript_length = ref_attach_to$max_end - ref_attach_to$min_start   # max exon end and min exon start for each transcript
-  return(ref_attach_to)
-  } #end of isoviz_rescale_introns
+  return(list(ref_attach_to, int_g))
 
+  } #end of isoviz_rescale_introns

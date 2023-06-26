@@ -23,6 +23,8 @@ library(magrittr)
 library(ggsci)
 library(cowplot)
 
+#gene_data=rbfox2_exons
+
 isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
                                     gene_introns,
                                     cell_type = "hESC",
@@ -53,6 +55,29 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
   max_end = max(gene_data$end)
   n_transcripts = gene_data %>% group_by(trans_id) %>% tally() %>% nrow()
   y_max = n_transcripts + 1
+  strand = unique(gene_data$strand)
+
+  if(intron_scale == "yes"){
+    # also remove NA isoform from mapped junctions if we want to scale
+    df = dplyr::filter(df, !(is.na(transcript_isoforms)))
+    old_exons = gene_data
+    # rescaled gene_data
+    scaled_res = isoviz_rescale_introns(gene_introns, gene_data, intron_scale_width)
+    gene_data = scaled_res[[1]]
+    int_g = scaled_res[[2]]
+    gene_data$blockstarts = gene_data$new_e_start
+    gene_data$blockends = gene_data$new_e_end
+
+    # save old exon starts and ends
+    gene_data$old_e_start = gene_data$start
+    gene_data$old_e_end = gene_data$end
+
+    gene_data$start = gene_data$min_start  # transcript start
+    gene_data$end =  gene_data$max_end  # transcript end
+
+    min_start = min(gene_data$start)
+    max_end = max(gene_data$end)
+  }
 
   # order the isoforms by length for plotting
   order_plot = gene_data %>% group_by(transcript_name, transcript_length) %>% tally() %>%
@@ -63,7 +88,7 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
   to_plot_ordered = gene_data %>% full_join(order_plot, by = c("transcript_name")) %>%
     arrange(trans_order, blockstarts) %>% mutate(seg_end = end)
 
-  # make isoform-level plot- currently there is only an option to plot all isoforms
+  # make isoform - level plot
   p1 = ggplot() +
     geom_segment(aes(x = to_plot_ordered$start, y = to_plot_ordered$trans_order,
                      xend = to_plot_ordered$seg_end, yend = to_plot_ordered$trans_order)) +
@@ -74,13 +99,11 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(),
           axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "top",
           plot.title = element_text(hjust = 0.5), plot.margin = margin(0.1,1,0,0.1, "in")) +
-    ggtitle(paste0(cell_type, ": ", to_plot_ordered$gene_name[1], " Junction to Isoform Map (" , to_plot_ordered$strand[1], " strand )")) +
+    ggtitle(paste0(cell_type, ": ", df$gene_name[1], " Junction to Isoform Map (" , to_plot_ordered$strand[1], " strand )")) +
     coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
 
   # code to plot leafcutter cluster info underneath isoform level data
   # aggregate isoform information
-  #df$junc_id = df$name sticking to the original junc_id from Megan's gencode file
-  #df$name = NULL
   df = unique(df)
 
   text = df %>% tidyr::separate(col = transcript_name, into = c("name", "transcript")) %>%
@@ -102,11 +125,75 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
   col_n = nrow(introns %>% distinct(cluster_idx))
   mycols <- rep(pal_npg("nrc", alpha = 1)(8), length.out = col_n)
 
+  # get updated coordinates based on plot above
+  if(intron_scale == "yes"){
+    #fix intron coordinates
+    #if(strand == "-"){
+    #  colnames(int_g)[2:3] = c("intron_ends", "intron_starts")} #is this always the case?
+    #if(strand == "+"){
+    #  colnames(int_g)[2:3] = c("intron_starts", "intron_ends")}
+    #}
+    #introns = merge(introns, int_g)
+    if(strand == "-"){
+      introns$new_intron_start = introns$intron_ends
+      introns$new_intron_end = introns$intron_starts
+      introns$intron_ends = introns$new_intron_end
+      introns$intron_starts = introns$new_intron_start
+      introns$new_intron_start = NULL
+      introns$new_intron_end = NULL
+    }
+
+    introns$length = abs(introns$intron_ends - introns$intron_starts)
+    introns$rescaled_length = introns$length / intron_scale_width
+
+    # merge with exon data to map new start and end points
+    if(strand == "-"){
+      get_coords = unique(to_plot_ordered[,c("new_e_start", "old_e_start", "transcript_name")])
+      colnames(get_coords)[2] = "new_intron_end"
+      introns$new_intron_end = introns$intron_ends
+      get_coords = unique(merge(introns, get_coords, by=c("transcript_name", "new_intron_end")))
+
+      # for each junction just want one set of coordinates for start and end
+      # so new_intron_end is old_exon_start
+      get_coords$new_intron_end = get_coords$new_e_start
+      get_coords$new_intron_start = get_coords$new_intron_end - get_coords$rescaled_length}
+
+    if(strand == "+"){
+        get_coords = unique(to_plot_ordered[,c("new_e_end", "old_e_end", "transcript_name")])
+        colnames(get_coords)[2] = "new_intron_start"
+        introns$new_intron_start = introns$intron_starts
+        get_coords = unique(merge(introns, get_coords, by=c("transcript_name", "new_intron_start")))
+
+        # for each junction just want one set of coordinates for start and end
+        get_coords$new_intron_start = get_coords$new_e_end
+        get_coords$new_intron_end = get_coords$new_intron_start + get_coords$rescaled_length}
+
+    introns = get_coords
+    introns$intron_starts = introns$new_intron_start
+    introns$intron_ends = introns$new_intron_end
+    }
+
   # get unique entries only
   introns = unique(introns %>% dplyr::select("chr", "intron_starts", "intron_ends",
                             "cluster_idx", "text_plot", "junc_id"))
+
+  # reorder
+  introns = as.data.table(introns)
+  introns = introns[order(cluster_idx)] #, junc.usage)]
   introns$junc.order = 1:nrow(introns)
 
+  if(intron_scale == "yes"){
+    p2 = ggplot() +
+      geom_rect(data = introns, mapping = aes(xmin = intron_starts, xmax = intron_ends, ymin = junc.order - 0.2, ymax = junc.order + 0.2, fill = as.character(cluster_idx))) +
+      scale_fill_manual(values = mycols) +
+      xlim(min_start, max_end) + theme_bw() +
+      xlab("Re-scaled Genomic Position (bp)") + ylab("") +
+      geom_text(data = introns, aes(x = Inf, y = junc.order, hjust = -0.1, label = junc_id), size = 3) +
+      theme(axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "none", plot.margin = margin(0,1,0,0.1, "in")) +
+      coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
+
+  }
+  if(intron_scale == "no"){
   p2 = ggplot() +
     geom_rect(data = introns, mapping = aes(xmin = intron_starts, xmax = intron_ends, ymin = junc.order - 0.2, ymax = junc.order + 0.2, fill = as.character(cluster_idx))) +
     geom_text(data = introns, aes(x = intron_ends, y = junc.order, label = text_plot), hjust = "inward", size = 3) +
@@ -115,7 +202,7 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     xlab("Hg38 Genomic Position (bp)") + ylab("") +
     geom_text(data = introns, aes(x = Inf, y = junc.order, hjust = -0.1, label = junc_id), size = 3) +
     theme(axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "none", plot.margin = margin(0,1,0,0.1, "in")) +
-    coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
+    coord_cartesian(xlim = c(min_start, max_end), clip = 'off')}
 
   # plot dimenstions based on number of isoforms and junctions
   total_height = (n_transcripts + nrow(introns))
