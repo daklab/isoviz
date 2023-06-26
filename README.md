@@ -1,15 +1,14 @@
-# isoviz <img src="inst/figures/logo.png" align="right" height="139" />
+# isoviz <img src="inst/figures/isoviz.png" align="right" height="139"/>
 
 <!-- badges: start -->
 
-[![GitHub
-issues](https://img.shields.io/github/issues/daklab/isoviz)](https://img.shields.io/github/issues/daklab/isoviz/issues)
-[![Travis build status](https://travis-ci.com/karini925/isoviz.svg?branch=master)](https://travis-ci.com/karini925/isoviz)
+[![GitHub issues](https://img.shields.io/github/issues/daklab/isoviz)](https://img.shields.io/github/issues/daklab/isoviz/issues) [![Travis build status](https://travis-ci.com/karini925/isoviz.svg?branch=master)](https://travis-ci.com/karini925/isoviz)
+
 <!-- badges: end -->
 
 `isoviz` is a package that allows for simplified transcript isoforms visualizations.
 
-The goal of isoviz is to simplify working with trancsript isoforms. Given a gene name or Ensembl ID, you can visualize all transcript structures. Additionally, Isoviz integrates with junction coordinates and counts obtained with Regtools. You can choose to visualize only the transcript isoforms that are detected in your sample and see how they group into leafuctter intron clusters. 
+The goal of isoviz is to simplify working with trancsript isoforms. Given a gene name or Ensembl ID, you can visualize all transcript structures. Additionally, Isoviz integrates with junction coordinates and counts obtained with Regtools. You can choose to visualize only the transcript isoforms that are detected in your sample and see how they group into leafuctter intron clusters.
 
 ## Installation
 
@@ -20,13 +19,13 @@ You can install the development version of isoviz from [GitHub](https://github.c
 devtools::install_github("daklab/isoviz")
 ```
 
-## Introduction 
+## Introduction
 
 Our package aims to help quantify and visualize the transcript isoforms that are present in your samples.
 
 ## Example
 
-We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data. You can also input your own psl file (gtf file as well in the future).  
+We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data. You can also input your own psl file (gtf file as well in the future).
 
 ``` r
 library(isoviz)
@@ -38,19 +37,19 @@ gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", pac
 all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
 ```
 
-#### Let's look at the exon coordinates 
+#### Let's look at the exon coordinates
 
 ```{r}
 exon_coords <- all_coordinates[[1]]
 print(head(exon_coords))
-``` 
+```
 
-#### Let's look at the intron coordinates 
+#### Let's look at the intron coordinates
 
 ```{r}
 intron_coords <- all_coordinates[[2]]
 print(head(intron_coords))
-``` 
+```
 
 #### Let's make a basic plot of the isoforms for the gene RBFOX2
 
@@ -58,16 +57,18 @@ print(head(intron_coords))
 # get exons and introns 
 rbfox2_exons <- filter(exon_coords, gene_name == "RBFOX2")
 rbfox2_introns <- filter(intron_coords, gene_name == "RBFOX2")
-``` 
+```
 
-#### Intron re-scaling 
-Let's rescale the intron coordinates but keep the relative exon alignments this step will return an updated dataframe of exon coordinates that we can use with our plotting function. 
+#### Intron re-scaling
+
+Let's rescale the intron coordinates but keep the relative exon alignments this step will return an updated dataframe of exon coordinates that we can use with our plotting function.
 
 ```{r}
 rescaled_coords = isoviz_rescale_introns(rbfox2_introns, rbfox2_exons, width_rescale=10) 
 ```
 
 #### Intron clustering using junction count data from BAM files
+
 We will first need to load our leafcutter junctions that we obtained by running Regtools extract junctions on our BAM files. You can use one of our preloaded cell types or first run this on your own BAM file and then use as input for this function. We will look at junctions in hESC data. We will first need to run 'minicutter' to cluster the junction coordinates and obtain intron cluster events.
 
 ```{r}
@@ -79,6 +80,7 @@ junctions <- system.file("data", "hESC-MKNK2-G1_v41_basic.junc", package="isoviz
 intron_clusts <- isoviz_minicutter(juncs_file = junctions)
 print(head(intron_clusts))
 ```
+
 Let's take a look at how junctions were grouped into intron clusters. Note, some of these clusters will only contain one junction (singleton). You will have the option to change this when running isoviz_minicutter.
 
 ```{r}
@@ -96,19 +98,23 @@ Let's continue working on RBFOX2. Now we have to map the observed junctions with
 mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intron_clusts, gencode_intron_all_data)
 print(head(mapped_junctions))
 ```
-Now we are ready to make a plot! 
+
+Now we are ready to make a plot!
+
 ```{r}
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons,
-                                    cell_type = "hESC",
-                                    junction_usage = 5, #min junc usage to be included 
-                                    include_all_juncs = FALSE,
-                                    include_specific_junctions = c("JUNC00193787", "JUNC00193785", "JUNC00193786", "unk.7"))
-  
+isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+                         cell_type = "hESC",
+                         junc_usage = 5, #min junc usage to be included
+                         include_all_juncs = FALSE,
+                         include_specific_junctions = c("junc178149",
+                                                        "junc178148",
+                                                        "junc178145"))
 ```
 
-<img src="inst/figures/Readme_RBFOX2.png" width="100%" />
+<img src="inst/figures/Readme_RBFOX2.png" width="100%"/>
 
 ## Citation
+
 ``` r
 citation("isoviz")
 #> 
@@ -126,5 +132,4 @@ citation("isoviz")
 #>  }
 ```
 
-## Questions or suggestions? 
-
+## Questions or suggestions?
