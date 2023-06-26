@@ -4,6 +4,7 @@
 
 [![GitHub
 issues](https://img.shields.io/github/issues/daklab/isoviz)](https://img.shields.io/github/issues/daklab/isoviz/issues)
+[![Travis build status](https://travis-ci.com/karini925/isoviz.svg?branch=master)](https://travis-ci.com/karini925/isoviz)
 <!-- badges: end -->
 
 `isoviz` is a package that allows for simplified transcript isoforms visualizations.

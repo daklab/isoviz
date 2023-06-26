@@ -5,16 +5,29 @@
 \title{A function for obtaining a comprehensive visualization of gene transcript
 isoforms with junction coverage across intron clusters information from RNA-seq
 and leafcutter clustering}
+\usage{
+isoviz_plot_juncs_to_iso(
+  mapped_junctions,
+  gene_data,
+  gene_introns,
+  cell_type = "hESC",
+  junc_usage = 5,
+  intron_scale = "no",
+  intron_scale_width = 10,
+  include_all_juncs = TRUE,
+  include_specific_junctions = c()
+)
+}
 \arguments{
 \item{mapped_junctions}{output from running isoviz_map_junctions}
 
 \item{cell_type}{cell type of interest, default=hESC}
 
-\item{junction_usage}{minimum junction usage as a percentage, default is 5}
-
 \item{include_all_juncs}{show all junctions on plot, will still filter out based on junction usage parameter, default is TRUE}
 
 \item{include_specific_junctions}{provide list of junctions to plot in second panel, can only specify if include_all_juncs is FALSE}
+
+\item{junction_usage}{minimum junction usage as a percentage, default is 5}
 }
 \value{
 plot

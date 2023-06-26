@@ -3,12 +3,20 @@
 \name{isoviz_map_junctions}
 \alias{isoviz_map_junctions}
 \title{A function for mapping junctions to transcript isoforms}
+\usage{
+isoviz_map_junctions(
+  cell_type = "hESC",
+  gene_intron_coords,
+  leafcutter_input,
+  gencode_intron_all_data
+)
+}
 \arguments{
+\item{cell_type}{cell type of interest, default=hESC}
+
 \item{gene_intron_coords}{obtained intron coordinates for gene of interest}
 
 \item{leafcutter_input}{output from running isoviz_minicutter}
-
-\item{cell_type}{cell type of interest, default=hESC}
 
 \item{gencode_intron_all_data}{expanded annotations of introns/transcripts}
 }

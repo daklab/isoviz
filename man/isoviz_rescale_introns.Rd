@@ -4,6 +4,9 @@
 \alias{isoviz_rescale_introns}
 \title{A function for reducing the length of introns when visualizing isoforms
 through re-scaling all coordinates in the gene.}
+\usage{
+isoviz_rescale_introns(introns, exons, width_rescale = 50)
+}
 \arguments{
 \item{introns}{#description}
 

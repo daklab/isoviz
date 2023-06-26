@@ -14,15 +14,11 @@
 #' @examples
 #' isoviz_rescale_introns()
 #' @name isoviz_rescale_introns
-#' @import data.table
-#' @import tidyr
-#' @import dplyr
-#' @import readr
 #' @export
 
-library(data.table)
-library(plyr)
-library(GenomicFeatures)
+#library(data.table)
+#library(plyr)
+#library(GenomicFeatures)
 
 #introns = rbfox2_introns
 #exons = rbfox2_exons

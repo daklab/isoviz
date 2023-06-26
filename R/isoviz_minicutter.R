@@ -46,9 +46,6 @@ calculate_usage_ratios = function(juncs) {
 #' @examples
 #' leafcutter_one_step()
 #' @name leafcutter_one_step
-#' @import tidyverse
-#' @import Matrix
-#' @import igraph
 #' @export
 
 leafcutter_one_step = function(juncs) {
@@ -90,9 +87,6 @@ leafcutter_one_step = function(juncs) {
 #' @examples
 #' isoviz_minicutter()
 #' @name isoviz_minicutter
-#' @import tidyverse
-#' @import Matrix
-#' @import igraph
 #' @export
 
 isoviz_minicutter = function(juncs_file, min_junction_reads=1, plot_summary=TRUE, min_usage_ratio=0.001) {

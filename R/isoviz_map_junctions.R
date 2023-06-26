@@ -7,13 +7,12 @@
 #' @examples
 #' isoviz_map_junctions()
 #' @name isoviz_map_junctions
-#' @import data.table
 #' @export
 
-library(data.table)
-library(plyr)
-library(GenomicFeatures)
-library(tidyr)
+#library(data.table)
+#library(plyr)
+#library(GenomicFeatures)
+#library(tidyr)
 
 # map junctions function
 isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_input, gencode_intron_all_data){

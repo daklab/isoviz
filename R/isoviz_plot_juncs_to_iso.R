@@ -10,18 +10,14 @@
 #' @examples
 #' isoviz_plot_juncs_to_iso()
 #' @name isoviz_plot_juncs_to_iso
-#' @import data.table
-#' @import magrittr
-#' @import ggsci
-#' @import cowplot
 #' @export
 
-library(data.table)
-library(dplyr)
-library(tidyr)
-library(magrittr)
-library(ggsci)
-library(cowplot)
+#library(data.table)
+#library(dplyr)
+#library(tidyr)
+#library(magrittr)
+#library(ggsci)
+#library(cowplot)
 
 #gene_data=rbfox2_exons
 
