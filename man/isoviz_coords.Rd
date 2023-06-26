@@ -21,5 +21,12 @@ intron coords (for leafcutter integration) with ENSG/ENST names plus
 meaningful names (ex RBFOX2)
 }
 \examples{
-isoviz_coords()
+# Example with psl file and pre-loaded gene to transcript conversions
+psl_file <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
+gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz")
+
+results <- isoviz_coords(psl_file, gene_trans, input_type = "psl")
+print(head(results)[1]) #exons coords
+print(head(results)[2]) #introns coords
+
 }
