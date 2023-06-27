@@ -46,8 +46,8 @@ print(head(intron_coords))
 Let's make a basic plot of the isoforms for the gene RBFOX2. We will also look at how to rescale the coordinates in case the gene has very long introns.
 
 ```{r}
-rbfox2_exons <- filter(exon_coords, gene_name == "PTEN")
-rbfox2_introns <- filter(intron_coords, gene_name == "PTEN")
+rbfox2_exons <- filter(exon_coords, gene_name == "RBFOX2")
+rbfox2_introns <- filter(intron_coords, gene_name == "RBFOX2")
 
 # let's rescale the intron coordinates but keep the relative exon alignments 
 # this step will return an updated dataframe of exon coordinates that we can use 
@@ -86,7 +86,8 @@ mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intr
 print(head(mapped_junctions))
 ```
 
-Now we are ready to make a plot! 
+Now we are ready to make a plot!
+
 ```{r}
 isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons,
                                     cell_type = "hESC",
@@ -94,8 +95,8 @@ isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons,
                                     include_all_juncs = TRUE, intron_scale = "no")
   
 ```
-Now let's make the same plot but with scaled introns so that we can see the exons better! 
-Note, this currently only works for junctions that we are able to annotate to transcript isoforms in the top plot! 
+
+Now let's make the same plot but with scaled introns so that we can see the exons better! Note, this currently only works for junctions that we are able to annotate to transcript isoforms in the top plot!
 
 ```{r}
 isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
@@ -104,6 +105,7 @@ isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
                                     intron_scale = "yes", intron_scale_width = 10,
                                     include_all_juncs = TRUE)
 ```
+
 ```{r}
 isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
                                     cell_type = "hESC",
@@ -112,4 +114,3 @@ isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
                                     include_all_juncs = FALSE, 
                      include_specific_junctions = c("junc178144", "junc178139"))
 ```
-

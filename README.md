@@ -52,21 +52,21 @@ all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use d
 
 #### Let's look at the exon coordinates
 
-```{r}
+``` r
 exon_coords <- all_coordinates[[1]]
 print(head(exon_coords))
 ```
 
 #### Let's look at the intron coordinates
 
-```{r}
+``` r
 intron_coords <- all_coordinates[[2]]
 print(head(intron_coords))
 ```
 
 #### Let's make a basic plot of the isoforms for the gene RBFOX2
 
-```{r}
+``` r
 # get exons and introns 
 rbfox2_exons <- filter(exon_coords, gene_name == "RBFOX2")
 rbfox2_introns <- filter(intron_coords, gene_name == "RBFOX2")
@@ -76,7 +76,7 @@ rbfox2_introns <- filter(intron_coords, gene_name == "RBFOX2")
 
 Let's rescale the intron coordinates but keep the relative exon alignments this step will return an updated dataframe of exon coordinates that we can use with our plotting function.
 
-```{r}
+``` r
 rescaled_coords = isoviz_rescale_introns(rbfox2_introns, rbfox2_exons, width_rescale=10) 
 ```
 
@@ -84,7 +84,7 @@ rescaled_coords = isoviz_rescale_introns(rbfox2_introns, rbfox2_exons, width_res
 
 We will first need to load our leafcutter junctions that we obtained by running Regtools extract junctions on our BAM files. You can use one of our preloaded cell types or first run this on your own BAM file and then use as input for this function. We will look at junctions in hESC data. We will first need to run 'minicutter' to cluster the junction coordinates and obtain intron cluster events.
 
-```{r}
+``` r
 
 # load junctions for cell type of interest or input your own
 junctions <- system.file("data", "hESC-MKNK2-G1_v41_basic.junc", package="isoviz")
@@ -96,7 +96,7 @@ print(head(intron_clusts))
 
 Let's take a look at how junctions were grouped into intron clusters. Note, some of these clusters will only contain one junction (singleton). You will have the option to change this when running isoviz_minicutter.
 
-```{r}
+``` r
 # For now we will use the expanded intron dataset with additional annotations by Megan 
 # We will need an additional function to add these annotations 
 intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package="isoviz")
@@ -107,24 +107,42 @@ load(intron_annotations)
 
 Let's continue working on RBFOX2. Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. Make sure to check strand of gene!
 
-```{r}
+``` r
 mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intron_clusts, gencode_intron_all_data)
 print(head(mapped_junctions))
 ```
 
 Now we are ready to make a plot!
 
-```{r}
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
-                         cell_type = "hESC",
-                         junc_usage = 5, #min junc usage to be included
-                         include_all_juncs = FALSE,
-                         include_specific_junctions = c("junc178149",
-                                                        "junc178148",
-                                                        "junc178145"))
+``` r
+isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons,
+                                    cell_type = "hESC",
+                                    junc_usage = 5, #min junc usage to be included 
+                                    include_all_juncs = TRUE, intron_scale = "no")
 ```
 
-<img src="inst/figures/Readme_RBFOX2.png" width="100%"/>
+<img src="inst/figures/firstreadmeimage.png"/>
+
+``` r
+isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+                                    cell_type = "hESC",
+                                    junc_usage = 50, #min junc usage to be included 
+                                    intron_scale = "yes", intron_scale_width = 10,
+                                    include_all_juncs = TRUE)
+```
+
+<img src="inst/figures/secondreadmeimage.png"/>
+
+``` r
+isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+                                    cell_type = "hESC",
+                                    junc_usage = 5, #min junc usage to be included 
+                                    intron_scale = "yes", intron_scale_width = 2,
+                                    include_all_juncs = FALSE, 
+                     include_specific_junctions = c("junc178144", "junc178139"))
+```
+
+<img src="inst/figures/thirdreadmeimage.png"/>
 
 ## Citation
 
