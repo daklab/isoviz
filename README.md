@@ -12,11 +12,24 @@ The goal of isoviz is to simplify working with trancsript isoforms. Given a gene
 
 ## Installation
 
+Note, the package has thus far been tested under R version 4.3.0.
+
 You can install the development version of isoviz from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("daklab/isoviz")
+```
+
+Alternatively, you can do the following:
+
+```{r}
+# 1. git clone https://github.com/daklab/isoviz.git
+# 2. set the directory in which isoviz is cloned into as your working directory, then do the following:
+library(devtools)
+devtools::build()
+devtools::install()
+library(isoviz)
 ```
 
 ## Introduction
