@@ -54,14 +54,12 @@ all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use d
 
 ``` r
 exon_coords <- all_coordinates[[1]]
-print(head(exon_coords))
 ```
 
 #### Let's look at the intron coordinates
 
 ``` r
 intron_coords <- all_coordinates[[2]]
-print(head(intron_coords))
 ```
 
 #### Let's make a basic plot of the isoforms for the gene RBFOX2
@@ -91,7 +89,6 @@ junctions <- system.file("data", "21c_hESC_RB2_empty_v41_basic.junc", package="i
 
 # run minicutter to get clusters 
 intron_clusts <- isoviz_minicutter(juncs_file = junctions)
-print(head(intron_clusts))
 ```
 
 Let's take a look at how junctions were grouped into intron clusters. Note, some of these clusters will only contain one junction (singleton). You will have the option to change this when running isoviz_minicutter.
@@ -109,13 +106,12 @@ Let's continue working on RBFOX2. Now we have to map the observed junctions with
 
 ``` r
 mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intron_clusts, gencode_intron_all_data)
-print(head(mapped_junctions))
 ```
 
 Now we are ready to make a plot!
 
 ``` r
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons,
+isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
                                     include_all_juncs = TRUE, intron_scale = "no")
