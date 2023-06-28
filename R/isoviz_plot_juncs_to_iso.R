@@ -180,7 +180,8 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
 
   if(intron_scale == "yes"){
     p2 = ggplot() +
-      geom_rect(data = introns, mapping = aes(xmin = intron_starts, xmax = intron_ends, ymin = junc.order - 0.2, ymax = junc.order + 0.2, fill = as.character(cluster_idx))) +
+      geom_rect(data = introns, mapping = aes(xmin = intron_starts, xmax = intron_ends, ymin = junc.order - 0.2, ymax = junc.order + 0.2, fill = as.character(cluster_idx)))+
+      geom_text(data = introns, aes(x = intron_ends, y = junc.order, label = text_plot), hjust = "inward", size = 2) +
       scale_fill_manual(values = mycols) +
       xlim(min_start, max_end) + theme_bw() +
       xlab("Re-scaled Genomic Position (bp)") + ylab("") +
