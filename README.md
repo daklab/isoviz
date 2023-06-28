@@ -24,7 +24,7 @@ devtools::install_github("daklab/isoviz")
 Alternatively, you can do the following:
 
 ``` r
-# 1. git clone https://github.com/daklab/isoviz.git}
+# 1. git clone https://github.com/daklab/isoviz.git
 # 2. set the directory in which isoviz is cloned into as your working directory, then do the following:
 library(devtools)
 devtools::build()
