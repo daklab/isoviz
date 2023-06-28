@@ -87,7 +87,7 @@ We will first need to load our leafcutter junctions that we obtained by running 
 ``` r
 
 # load junctions for cell type of interest or input your own
-junctions <- system.file("data", "hESC-MKNK2-G1_v41_basic.junc", package="isoviz")
+junctions <- system.file("data", "21c_hESC_RB2_empty_v41_basic.junc", package="isoviz")
 
 # run minicutter to get clusters 
 intron_clusts <- isoviz_minicutter(juncs_file = junctions)
