@@ -22,10 +22,15 @@
 
 #introns = rbfox2_introns
 #exons = rbfox2_exons
+#exons = gene_data # has filtered isoforms
+#introns = gene_introns # has all isoforms
 
 isoviz_rescale_introns = function(introns, exons,
                                   width_rescale=50) {
-
+  
+  # filter intron isoform data based on exon data
+  introns %<>% filter(transcript_name %in% exons$transcript_name)
+  
   # very important to consider strand!
   strand = introns$strand[1]
   print(strand)

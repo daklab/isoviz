@@ -15,6 +15,7 @@ isoviz_plot_juncs_to_iso(
   intron_scale = "no",
   intron_scale_width = 10,
   include_all_juncs = TRUE,
+  include_specific_isoforms = c(),
   include_specific_junctions = c()
 )
 }
@@ -24,6 +25,8 @@ isoviz_plot_juncs_to_iso(
 \item{cell_type}{cell type of interest, default=hESC}
 
 \item{include_all_juncs}{show all junctions on plot, will still filter out based on junction usage parameter, default is TRUE}
+
+\item{include_specific_isoforms}{provide list of isoforms to plot in first panel, default is to plot all}
 
 \item{include_specific_junctions}{provide list of junctions to plot in second panel, can only specify if include_all_juncs is FALSE}
 

@@ -14,6 +14,9 @@
 #library(GenomicFeatures)
 #library(tidyr)
 
+#gene_intron_coords = gene_introns
+#leafcutter_input = intron_clusts
+
 # map junctions function
 isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_input, gencode_intron_all_data){
 
@@ -34,11 +37,12 @@ isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutt
     left_join(juncs_recluster, by = c("chr" = "chrom", "intron_starts" = "start", "intron_ends" = "end", "strand")) %>%
     arrange(cluster_idx)
 
-  # get additional columns from the gencode_intron_all_data file
+  # get additional columns from the gencode_intron_all_data file- fixed bug here creating redundant isoform name columns
+  gencode_intron_all_data %<>% select(-transcript_isoforms)
   gene_cluster = gene_cluster %>%
     left_join(gencode_intron_all_data, by=c("chr" = "chr", "intron_starts" = "junc_start", "intron_ends"="junc_end", "strand", "gene_id", "gene_name", "gene_type"))
 
-  # the column 'transcript_isoforms' has pre-mapped transcript isoforms that map those junctions/introns
+  # the column 'transcript_name' has pre-mapped transcript isoforms that map those junctions/introns
   name = unique(gene_cluster$gene_name)
   gene_id = unique(gene_cluster$gene_id)
   gene_strand = unique(gene_cluster$strand)
@@ -70,23 +74,22 @@ isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutt
   # junctions have counts, avoid filtering on partially unique for now
 
   non_expressed_genes = all_gene_clusters %>%
-    separate_longer_delim(transcript_isoforms, delim = ",") %>% dplyr::group_by(transcript_isoforms, junction_category) %>%
+    dplyr::group_by(transcript_name, junction_category) %>%
     mutate(isoform_counts = ifelse(junction_category == "fully_unique", sum(junc.counts), junc.counts)) %>%
-    filter(junction_category == "fully_unique" & isoform_counts == 0) %>% distinct(transcript_isoforms) %>% ungroup()
+    filter(junction_category == "fully_unique" & isoform_counts == 0) %>% distinct(transcript_name) %>% ungroup()
 
   uniquely_targetable = all_gene_clusters %>%
-    separate_longer_delim(transcript_isoforms, delim = ",") %>% filter(junction_category == "fully_unique") %>%
-    distinct(transcript_isoforms)
+    filter(junction_category == "fully_unique") %>%
+    distinct(transcript_name)
 
   partially_targetable = all_gene_clusters %>%
-    separate_longer_delim(transcript_isoforms, delim = ",") %>% filter(junction_category == "partial_unique") %>%
-    distinct(transcript_isoforms)
+    filter(junction_category == "partial_unique") %>%
+    distinct(transcript_name)
 
   output = all_gene_clusters %>%
-    separate_longer_delim(transcript_isoforms, delim = ",") %>%
-    mutate(transcript_targetable = ifelse(transcript_isoforms %in% uniquely_targetable$transcript_isoforms, "Uniquely",
-                                          ifelse(transcript_isoforms %in% partially_targetable$transcript_isoforms, "Partially", "None"))) %>%
-    mutate(isoform_expressed = ifelse(transcript_isoforms %in% non_expressed_genes$transcript_isoforms, "Unlikely", "Likely"))
+    mutate(transcript_targetable = ifelse(transcript_name %in% uniquely_targetable$transcript_name, "Uniquely",
+                                          ifelse(transcript_name %in% partially_targetable$transcript_name, "Partially", "None"))) %>%
+    mutate(isoform_expressed = ifelse(transcript_name %in% non_expressed_genes$transcript_name, "Unlikely", "Likely"))
 
   output$output_id = NULL
   output = unique(output)

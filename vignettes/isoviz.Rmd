@@ -41,18 +41,6 @@ exon_coords <- all_coordinates[[1]]
 intron_coords <- all_coordinates[[2]]
 ```
 
-Let's make a basic plot of the isoforms for the gene RBFOX2. We will also look at how to rescale the coordinates in case the gene has very long introns.
-
-```{r}
-rbfox2_exons <- filter(exon_coords, gene_name == "RBFOX2")
-rbfox2_introns <- filter(intron_coords, gene_name == "RBFOX2")
-
-# let's rescale the intron coordinates but keep the relative exon alignments 
-# this step will return an updated dataframe of exon coordinates that we can use 
-# with our plotting function
-
-rescaled_coords = isoviz_rescale_introns(rbfox2_introns, rbfox2_exons, width_rescale=10) 
-```
 
 We will first need to load our leafcutter junctions that we obtained by running Regtools extract junctions on our BAM files. You can use one of our preloaded cell types or first run this on your own BAM file and then use as input for this function. We will look at junctions in hESC data. We will first need to run 'minicutter' to cluster the junction coordinates and obtain intron cluster events.
 
@@ -74,37 +62,55 @@ intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package
 load(intron_annotations)
 ```
 
+Let's make a basic plot of the isoforms for the gene RBFOX2. We will also look at how to rescale the coordinates in case the gene has very long introns.
+
+```{r}
+gene = "RBFOX2"
+gene_exons <- filter(exon_coords, gene_name == gene)
+gene_introns <- filter(intron_coords, gene_name == gene)
+
+# let's rescale the intron coordinates but keep the relative exon alignments 
+# this step will return an updated dataframe of exon coordinates that we can use 
+# with our plotting function
+
+rescaled_coords = isoviz_rescale_introns(gene_introns, gene_exons, width_rescale=10) 
+```
+
 Let's continue working on RBFOX2. Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. Make sure to check strand of gene!
 
 ```{r}
-mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intron_clusts, gencode_intron_all_data)
+mapped_junctions = isoviz_map_junctions(cell_type = "hESC", gene_introns, intron_clusts, gencode_intron_all_data)
+
 ```
 
 Now we are ready to make a plot!
 
 ```{r}
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
                                     include_all_juncs = TRUE, intron_scale = "no")
-  
 ```
 
 Now let's make the same plot but with scaled introns so that we can see the exons better! Note, this currently only works for junctions that we are able to annotate to transcript isoforms in the top plot!
 
 ```{r}
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
-                                    junc_usage = 50, #min junc usage to be included 
+                                    junc_usage = 5, #min junc usage to be included 
                                     intron_scale = "yes", intron_scale_width = 10,
                                     include_all_juncs = TRUE)
 ```
 
 ```{r}
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
-                                    intron_scale = "yes", intron_scale_width = 2,
-                                    include_all_juncs = FALSE, 
-                     include_specific_junctions = c("junc178144", "junc178139"))
+                                    intron_scale = "yes", intron_scale_width = 10,
+                                    include_all_juncs = FALSE,
+                                    include_specific_isoforms = c("RBFOX2-209", "RBFOX2-220", "RBFOX2-208", "RBFOX2-205"),
+                                    include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"))
+date <- format(Sys.Date(), "%y%m%d")
+ggsave(paste0("~/isoviz/plots/", date, "_", gene,".png"), width = 8, height = 2)
+
 ```

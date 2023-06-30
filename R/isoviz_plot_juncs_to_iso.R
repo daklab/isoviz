@@ -5,6 +5,7 @@
 #' @param cell_type cell type of interest, default=hESC
 #' @param junction_usage minimum junction usage as a percentage, default is 5
 #' @param include_all_juncs show all junctions on plot, will still filter out based on junction usage parameter, default is TRUE
+#' @param include_specific_isoforms provide list of isoforms to plot in first panel, default is to plot all
 #' @param include_specific_junctions provide list of junctions to plot in second panel, can only specify if include_all_juncs is FALSE
 #' @return plot
 #' @examples
@@ -19,7 +20,8 @@
 #library(ggsci)
 #library(cowplot)
 
-#gene_data=rbfox2_exons
+#gene_data=gene_exons
+#df = output
 
 isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
                                     gene_introns,
@@ -28,12 +30,18 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
                                     intron_scale = "no",
                                     intron_scale_width = 10,
                                     include_all_juncs = TRUE,
+                                    include_specific_isoforms = c(), 
                                     include_specific_junctions = c()){
 
   # call isoviz_map_junctions first and use output from that
   df = mapped_junctions
 
-  # filter here if the user wants to filter for specific junctions
+  # filter here if the user wants to filter for specific isoforms or junctions
+  if(length(include_specific_isoforms) != 0){
+    df %<>% filter(transcript_name %in% include_specific_isoforms)
+    gene_data %<>% filter(transcript_name %in% include_specific_isoforms)
+  }
+  
   if(include_all_juncs == FALSE){
     if(length(include_specific_junctions) == 0){
       stop("Must include list of junctions if include_all_juncs == FALSE")
@@ -55,7 +63,7 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
 
   if(intron_scale == "yes"){
     # also remove NA isoform from mapped junctions if we want to scale
-    df = dplyr::filter(df, !(is.na(transcript_isoforms)))
+    df = dplyr::filter(df, !(is.na(transcript_name)))
     old_exons = gene_data
     # rescaled gene_data
     scaled_res = isoviz_rescale_introns(gene_introns, gene_data, intron_scale_width)
@@ -113,13 +121,7 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
   text = unique(text)
   clusters = unique(df$cluster_idx)
 
-  introns = df %>% dplyr::select(-gene_id, -gene_name, -transcript_isoforms, -transcript_targetable, -isoform_expressed) %>%
-    distinct() %>% arrange(cluster_idx, junc.usage)
-  introns %<>% left_join(text)
-
-  # get colors
-  col_n = nrow(introns %>% distinct(cluster_idx))
-  mycols <- rep(pal_npg("nrc", alpha = 1)(8), length.out = col_n)
+  introns = df %>% left_join(text)
 
   # get updated coordinates based on plot above
   if(intron_scale == "yes"){
@@ -168,14 +170,30 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     introns$intron_starts = introns$new_intron_start
     introns$intron_ends = introns$new_intron_end
     }
-
+  
+  # do this after re-scaling
+  introns %<>% dplyr::select(-gene_id, -gene_name, -transcript_targetable, -isoform_expressed, -transcript_type, -trans_id, -transcript_name) %>%
+    distinct() %>% arrange(cluster_idx, junc.usage)
+  
+  # get colors
+  col_n = nrow(introns %>% distinct(cluster_idx))
+  mycols <- rep(pal_npg("nrc", alpha = 1)(8), length.out = col_n)
+  
   # get unique entries only
   introns = unique(introns %>% dplyr::select("chr", "intron_starts", "intron_ends",
                             "cluster_idx", "text_plot", "junc_id"))
 
-  # reorder
+  # reorder based on strand so that 5' junctions are above 3' junctions
   introns = as.data.table(introns)
-  introns = introns[order(cluster_idx)] #, junc.usage)]
+  #introns = introns[order(cluster_idx)] #, junc.usage)]
+  if(strand == "+"){
+    introns = introns[order(desc(junc_id)), ]
+  }
+  
+  if(strand == "-"){
+    introns = introns[order(junc_id), ]
+  }
+  
   introns$junc.order = 1:nrow(introns)
 
   if(intron_scale == "yes"){
