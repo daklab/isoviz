@@ -105,13 +105,13 @@ load(intron_annotations)
 Let's continue working on RBFOX2. Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. Make sure to check strand of gene!
 
 ``` r
-mapped_junctions = isoviz_map_junctions(cell_type = "hESC", rbfox2_introns, intron_clusts, gencode_intron_all_data)
+mapped_junctions = isoviz_map_junctions(cell_type = "hESC", gene_introns, intron_clusts, gencode_intron_all_data)
 ```
 
 Now we are ready to make a plot!
 
 ``` r
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
                                     include_all_juncs = TRUE, intron_scale = "no")
@@ -120,9 +120,9 @@ isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
 <img src="inst/figures/firstreadmeimage.png"/>
 
 ``` r
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
-                                    junc_usage = 50, #min junc usage to be included 
+                                    junc_usage = 5, #min junc usage to be included 
                                     intron_scale = "yes", intron_scale_width = 10,
                                     include_all_juncs = TRUE)
 ```
@@ -130,15 +130,24 @@ isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
 <img src="inst/figures/secondreadmeimage.png"/>
 
 ``` r
-isoviz_plot_juncs_to_iso(mapped_junctions, rbfox2_exons, rbfox2_introns,
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
-                                    intron_scale = "yes", intron_scale_width = 2,
-                                    include_all_juncs = FALSE, 
-                     include_specific_junctions = c("junc178144", "junc178139"))
+                                    intron_scale = "yes", intron_scale_width = 10,
+                                    include_all_juncs = FALSE,
+                                    include_specific_isoforms = c("RBFOX2-209", "RBFOX2-220", "RBFOX2-208", "RBFOX2-205"),
+                                    include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"))
 ```
 
 <img src="inst/figures/thirdreadmeimage.png"/>
+
+Finally, if you are interested in obtaining a list of sgRNAs that you could use to target specific junctions with Cas13, you can do the following:
+
+``` r
+guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", 
+                                           leafcutter_input=intron_clusts)
+guide_table
+```
 
 ## Citation
 
