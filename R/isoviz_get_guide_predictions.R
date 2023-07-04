@@ -36,6 +36,7 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
 
   # 1. load most up-to-date gencode_predictions file (this will be updated)
   gencode_predictions <- system.file("data", "gencode_predictions.rda.gz", package="isoviz")
+  gencode_predictions <- gzfile(gencode_predictions, "rb")
   load(gencode_predictions)
 
   # ranking of prediction score -> values 0 to 1
