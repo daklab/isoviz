@@ -24,7 +24,8 @@ Depends:
     igraph,
     magrittr,
     ggsci,
-    cowplot
+    cowplot,
+    rempsyc
 Suggests: 
     knitr,
     rmarkdown
@@ -34,5 +35,6 @@ InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/hESC-MKNK2-G1_v41_basic.junc,
           data/a375-total_Aligned.q20.sort.junc,
           data/gencode_intron_all_data.rda,
+          data/gencode_predictions.rda.gz,
           figures/isoviz.png
 RoxygenNote: 7.2.3
