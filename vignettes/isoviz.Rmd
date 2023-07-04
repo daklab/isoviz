@@ -118,7 +118,7 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
 Finally, if you are interested in obtaining a list of sgRNAs that you could use to target specific junctions with Cas13, you can do the following: 
 
 ```{r}
-#guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts)
-#guide_table
+guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts)
+guide_table
 ```
 
