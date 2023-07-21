@@ -101,8 +101,19 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     intron_scale = "yes", intron_scale_width = 10,
                                     include_all_juncs = TRUE)
 ```
+```{r}
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
+                                    cell_type = "hESC",
+                                    junc_usage = 5, #min junc usage to be included 
+                                    intron_scale = "yes", intron_scale_width = 10, 
+                                    include_specific_junctions = c("junc178147", "junc178149"), include_all_juncs = FALSE)
+date <- format(Sys.Date(), "%y%m%d")
+ggsave(paste0("~/cas13-isoforms/isoviz_plots/", date, "_", gene,".png"), width = 8, height = 3)
+
+```
 
 ```{r}
+# RBFOX2
 isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
@@ -113,12 +124,65 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
 #date <- format(Sys.Date(), "%y%m%d")
 #ggsave(paste0("~/isoviz/plots/", date, "_", gene,".png"), width = 8, height = 2)
 
+# COP1
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
+                                    cell_type = "hESC",
+                                    junc_usage = 0, #min junc usage to be included 
+                                    intron_scale = "yes", intron_scale_width = 10,
+                                    include_all_juncs = FALSE,
+                                    include_specific_isoforms = c("COP1-201", "COP1-204"),
+                                    include_specific_junctions = c("junc20760", "junc20769", "junc20759"))
+date <- format(Sys.Date(), "%y%m%d")
+ggsave(paste0("~/isoviz/plots/", date, "_", gene,".pdf"), width = 8, height = 3)
+
+# SPAG9
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
+                                    cell_type = "hESC",
+                                    junc_usage = 0, #min junc usage to be included 
+                                    intron_scale = "yes", intron_scale_width = 10,
+                                    include_all_juncs = FALSE,
+                                    include_specific_junctions = c("junc117123", "junc117141", "junc117144"))
+date <- format(Sys.Date(), "%y%m%d")
+ggsave(paste0("~/isoviz/plots/", date, "_", gene,".pdf"), width = 8, height = 3)
+
+# MKNK2
+isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
+                                    cell_type = "hESC",
+                                    junc_usage = 0, #min junc usage to be included 
+                                    intron_scale = "yes", intron_scale_width = 10,
+                                    include_all_juncs = FALSE,
+                                    include_specific_isoforms = c("MKNK2-201", "MKNK2-202"),
+                                    include_specific_junctions = c("junc128207", "junc128208"))
+date <- format(Sys.Date(), "%y%m%d")
+ggsave(paste0("~/isoviz/plots/", date, "_", gene,".pdf"), width = 8, height = 2.5)
+
 ```
+
+
 
 Finally, if you are interested in obtaining a list of sgRNAs that you could use to target specific junctions with Cas13, you can do the following: 
 
 ```{r}
-guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts)
-guide_table
+library(flextable)
+
+guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts,
+                                           guides_per_junction = 1, include_all_juncs = FALSE, 
+                                           include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"))
+
+guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts,
+                                           guides_per_junction = 8, include_all_juncs = FALSE, 
+                                           include_specific_junctions = c("junc178149"))
+
+# for paper
+guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts,
+                                           guides_per_junction = 5, include_all_juncs = FALSE, 
+                                           include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"))
+
+class(guide_table)
+
+
+date <- format(Sys.Date(), "%y%m%d")
+save_as_image(x = guide_table, path = paste0("~/cas13-isoforms/isoviz_plots/", date, "_table_", gene,".pdf"), res = 300)
+
 ```
 

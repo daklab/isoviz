@@ -4,9 +4,9 @@
 #' @param mapped_junctions output from running isoviz_map_junctions
 #' @param cell_type cell type of interest, default=hESC
 #' @param junction_usage minimum junction usage as a percentage, default is 5
-#' @param include_all_juncs show all junctions on plot, will still filter out based on junction usage parameter, default is TRUE
 #' @param include_specific_isoforms provide list of isoforms to plot in first panel, default is to plot all
-#' @param include_specific_junctions provide list of junctions to plot in second panel, can only specify if include_all_juncs is FALSE
+#' @param include_specific_junctions provide list of junctions to plot in second panel
+#' @param plot_transcripts_only plot the top plot only showing transcript structure, default is FALSE
 #' @return plot
 #' @examples
 #' isoviz_plot_juncs_to_iso()
@@ -29,9 +29,9 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
                                     junc_usage = 5,
                                     intron_scale = "no",
                                     intron_scale_width = 10,
-                                    include_all_juncs = TRUE,
                                     include_specific_isoforms = c(), 
-                                    include_specific_junctions = c()){
+                                    include_specific_junctions = c(),
+                                    plot_transcripts_only = FALSE){
 
   # call isoviz_map_junctions first and use output from that
   df = mapped_junctions
@@ -42,11 +42,8 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     gene_data %<>% filter(transcript_name %in% include_specific_isoforms)
   }
   
-  if(include_all_juncs == FALSE){
-    if(length(include_specific_junctions) == 0){
-      stop("Must include list of junctions if include_all_juncs == FALSE")
-    } else{
-      df %<>% filter(junc_id %in% include_specific_junctions)
+  if(length(include_specific_junctions) != 0){
+    df %<>% filter(junc_id %in% include_specific_junctions)
     }
   }
 
@@ -93,6 +90,12 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     arrange(trans_order, blockstarts) %>% mutate(seg_end = end)
 
   # make isoform - level plot
+  if(intron_scale == "yes"){
+    plot_title = paste0(df$gene_name[1], " Junction to Isoform Map")
+  }else{
+    plot_title = paste0(df$gene_name[1], " Junction to Isoform Map (" , to_plot_ordered$strand[1], " strand )")
+  }
+  
   p1 = ggplot() +
     geom_segment(aes(x = to_plot_ordered$start, y = to_plot_ordered$trans_order,
                      xend = to_plot_ordered$seg_end, yend = to_plot_ordered$trans_order)) +
@@ -103,7 +106,7 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(),
           axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "top",
           plot.title = element_text(hjust = 0.5), plot.margin = margin(0.1,1,0,0.1, "in")) +
-    ggtitle(paste0(cell_type, ": ", df$gene_name[1], " Junction to Isoform Map (" , to_plot_ordered$strand[1], " strand )")) +
+    ggtitle(plot_title) +
     coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
 
   # code to plot leafcutter cluster info underneath isoform level data
@@ -236,6 +239,11 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     junc_h = nrow(introns) * 1.2
   }
   p1_p2 = plot_grid(p1, p2, ncol = 1, align = "v", rel_heights = c(n_transcripts/total_height, nrow(introns)/total_height))
-
-  return(p1_p2)
+  
+  if(plot_transcripts_only == TRUE){
+    return(p1)
+  }else{
+    return(p1_p2)
+  }
+  
 }

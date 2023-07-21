@@ -2,8 +2,8 @@
 #' @param gene ensembl ID for now
 #' @param cell_type cell type of interest, default=hESC
 #' @param guides_per_junction the number of highest ranking guides to print out, minimum of 1 and maximum of 8, default is 8
-#' @param include_all_juncs print guides for all junctions of the gene, default is TRUE
-#' @param include_specific_junctions provide list of junctions for guide RNA prediction, can only specify if include_all_juncs is FALSE
+#' @param output_format Either return the table as a dataframe or flextable, default=dataframe
+#' @param include_specific_junctions provide list of junctions for guide RNA prediction
 #' @param leafcutter_input output from running isoviz_minicutter
 #' @return table
 #' @examples
@@ -13,9 +13,9 @@
 
 isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "hESC",
                                  guides_per_junction = 8,
-                                 include_all_juncs = TRUE,
                                  include_specific_junctions = c(),
-                                 leafcutter_input){
+                                 leafcutter_input, 
+                                 output_format = "dataframe"){
 
   print("Loading gencode sgRNA prediction file")
   # 1. load most up-to-date gencode_predictions file (this will be updated)
@@ -29,13 +29,9 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
   gencode_predictions %<>% mutate(score = 1 - (predicted_lfc - min_score) / (max_score - min_score)) %>% arrange(score)
 
   # filter here if the user wants to filter for specific junctions
-  if(include_all_juncs == FALSE){
-    if(length(include_specific_junctions) == 0){
-      stop("Must include list of junctions if include_all_juncs == FALSE")
-    } else{
-      filtered_predictions = gencode_predictions %>% filter(junc_id %in% include_specific_junctions)
-    }
-  } else{
+  if(length(include_specific_junctions) != 0){
+    filtered_predictions = gencode_predictions %>% filter(junc_id %in% include_specific_junctions)
+  }else{
     filtered_predictions = gencode_predictions %>% filter(grepl(gene, gene_id))
   }
 
@@ -56,10 +52,10 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
   filtered_guide_info %<>% dplyr::select(Cluster = cluster_idx, JuncID = junc_id, Category = junction_category, Transcripts, Counts = junc.counts, Usage,
                                   GuideSeq = guide_sequence, Score = score)
   filtered_guide_info %<>% dplyr::mutate(Counts = ifelse(is.na(Counts), 0, Counts))
-  print(head(filtered_guide_info))
+  #print(head(filtered_guide_info))
   print("Closed gencode sgRNA prediction file")
-  print(gene_name)
-  print(guides_per_junction)
+  #print(gene_name)
+  #print(guides_per_junction)
   # don't add sig digits
   #usetext <- function(x) {
   #  formatC(x, format = "f", digits = 0)
@@ -68,9 +64,12 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
   #table_return = nice_table(filtered_guide_info, col.format.custom = 1:6,
   #                          format.custom = usetext,
   #           title = paste0(gene_name, ": Top ", guides_per_junction, " gRNAs per Junction"))
-
-  table_return = nice_table(filtered_guide_info,
-                            title = paste0(gene_name, ": Top ", guides_per_junction, " gRNAs per Junction"))
+  if(output_format == "dataframe"){
+    table_return = filtered_guide_info
+  }else{
+    table_return = nice_table(filtered_guide_info,
+                              title = paste0(gene_name, ": Top ", guides_per_junction, " gRNAs per Junction"))
+  }
 
   return(table_return)
 }
