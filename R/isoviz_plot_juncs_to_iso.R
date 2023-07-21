@@ -44,8 +44,8 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
   
   if(length(include_specific_junctions) != 0){
     df %<>% filter(junc_id %in% include_specific_junctions)
-    }
   }
+
 
   # filter based on junction usage
   df = dplyr::filter(df, junc.usage >= junc_usage)

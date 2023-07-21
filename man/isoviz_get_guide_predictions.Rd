@@ -8,9 +8,9 @@ isoviz_get_guide_predictions(
   gene = "ENSG00000100320",
   cell_type = "hESC",
   guides_per_junction = 8,
-  include_all_juncs = TRUE,
   include_specific_junctions = c(),
-  leafcutter_input
+  leafcutter_input,
+  output_format = "dataframe"
 )
 }
 \arguments{
@@ -20,11 +20,11 @@ isoviz_get_guide_predictions(
 
 \item{guides_per_junction}{the number of highest ranking guides to print out, minimum of 1 and maximum of 8, default is 8}
 
-\item{include_all_juncs}{print guides for all junctions of the gene, default is TRUE}
-
-\item{include_specific_junctions}{provide list of junctions for guide RNA prediction, can only specify if include_all_juncs is FALSE}
+\item{include_specific_junctions}{provide list of junctions for guide RNA prediction}
 
 \item{leafcutter_input}{output from running isoviz_minicutter}
+
+\item{output_format}{Either return the table as a dataframe or flextable, default=dataframe}
 }
 \value{
 table
