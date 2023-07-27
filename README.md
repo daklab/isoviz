@@ -1,4 +1,4 @@
-# isoviz <img src="inst/figures/isoviz.png" align="right" height="139"/>
+# isoviz <img src="inst/figures/isoviz_logo.png" align="right" height="139"/>
 
 <!-- badges: start -->
 
@@ -114,29 +114,30 @@ Now we are ready to make a plot!
 isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
-                                    include_all_juncs = TRUE, intron_scale = "no")
+                                    intron_scale = "no")
 ```
 
 <img src="inst/figures/firstreadmeimage.png"/>
 
 ``` r
+
 isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
-                                    intron_scale = "yes", intron_scale_width = 10,
-                                    include_all_juncs = TRUE)
+                                    intron_scale = "yes", intron_scale_width = 10)
 ```
 
 <img src="inst/figures/secondreadmeimage.png"/>
 
 ``` r
+
 isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5, #min junc usage to be included 
                                     intron_scale = "yes", intron_scale_width = 10,
-                                    include_all_juncs = FALSE,
                                     include_specific_isoforms = c("RBFOX2-209", "RBFOX2-220", "RBFOX2-208", "RBFOX2-205"),
                                     include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"))
+                                    
 ```
 
 <img src="inst/figures/thirdreadmeimage.png"/>

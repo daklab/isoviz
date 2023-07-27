@@ -41,7 +41,6 @@ exon_coords <- all_coordinates[[1]]
 intron_coords <- all_coordinates[[2]]
 ```
 
-
 We will first need to load our leafcutter junctions that we obtained by running Regtools extract junctions on our BAM files. You can use one of our preloaded cell types or first run this on your own BAM file and then use as input for this function. We will look at junctions in hESC data. We will first need to run 'minicutter' to cluster the junction coordinates and obtain intron cluster events.
 
 ```{r}
@@ -100,6 +99,7 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     junc_usage = 5, #min junc usage to be included 
                                     intron_scale = "yes", intron_scale_width = 10)
 ```
+
 ```{r}
 isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
                                     cell_type = "hESC",
@@ -153,9 +153,7 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
 
 ```
 
-
-
-Finally, if you are interested in obtaining a list of sgRNAs that you could use to target specific junctions with Cas13, you can do the following: 
+Finally, if you are interested in obtaining a list of sgRNAs that you could use to target specific junctions with Cas13, you can do the following:
 
 ```{r}
 #library(flextable)
@@ -182,4 +180,3 @@ guide_table
 #save_as_image(x = guide_table, path = paste0("~/cas13-isoforms/isoviz_plots/", date, "_table_", gene,".pdf"), res = 300)
 
 ```
-
