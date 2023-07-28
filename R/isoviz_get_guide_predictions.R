@@ -24,10 +24,10 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
   load(gencode_predictions)
 
   # ranking of prediction score -> values 0 to 1
-  min_score = min(gencode_predictions$predicted_lfc)
-  max_score = max(gencode_predictions$predicted_lfc)
-  gencode_predictions %<>% mutate(score = 1 - (predicted_lfc - min_score) / (max_score - min_score)) %>% arrange(score)
-
+  # min_score = min(gencode_predictions$predicted_lfc)
+  # max_score = max(gencode_predictions$predicted_lfc)
+  # gencode_predictions %<>% mutate(score = 1 - (predicted_lfc - min_score) / (max_score - min_score)) %>% arrange(score)
+  
   # filter here if the user wants to filter for specific junctions
   if(length(include_specific_junctions) != 0){
     filtered_predictions = gencode_predictions %>% filter(junc_id %in% include_specific_junctions)
@@ -43,14 +43,14 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
     dplyr::mutate(cluster.counts = sum(junc.counts), Usage = round(Usage, 2)) %>% ungroup()
 
   all_guide_info = filtered_predictions %>%
-    left_join(juncs_recluster, by = c("chr" = "chrom", "junc_start" = "start", "junc_end" = "end", "strand")) %>%
-    arrange(junc_id, score)
+    left_join(juncs_recluster, by = c("chr" = "chrom", "start", "end", "strand")) %>%
+    arrange(junc_id, TIGER_score)
 
   # filter based on parameter for number of guides to report and change NA in counts to 0
-  filtered_guide_info = all_guide_info %>% dplyr::group_by(junc_id) %>% slice_max(score, n = guides_per_junction) %>% ungroup()
+  filtered_guide_info = all_guide_info %>% dplyr::group_by(junc_id) %>% slice_max(TIGER_score, n = guides_per_junction) %>% ungroup()
   filtered_guide_info$Transcripts <- gsub(paste0(gene_name, "-"), "", filtered_guide_info$transcript_isoforms)
   filtered_guide_info %<>% dplyr::select(Cluster = cluster_idx, JuncID = junc_id, Category = junction_category, Transcripts, Counts = junc.counts, Usage,
-                                  GuideSeq = guide_sequence, Score = score)
+                                  GuideSeq = guide_sequence, TIGER_score)
   filtered_guide_info %<>% dplyr::mutate(Counts = ifelse(is.na(Counts), 0, Counts))
   #print(head(filtered_guide_info))
   print("Closed gencode sgRNA prediction file")
