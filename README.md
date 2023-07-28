@@ -34,7 +34,9 @@ library(isoviz)
 
 ## Introduction
 
-Our package aims to help quantify and visualize the transcript isoforms that are present in your samples.
+Our package aims to help quantify and visualize the transcript isoforms that are present in your samples. The figure below depicts isoviz's workflow as well as the required inputs and expected outputs.
+
+<img src="inst/figures/readme_main.png"/>
 
 ## Example
 
@@ -145,10 +147,12 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
 Finally, if you are interested in obtaining a list of sgRNAs that you could use to target specific junctions with Cas13, you can do the following:
 
 ``` r
-guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", 
-                                           leafcutter_input=intron_clusts)
+guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts, guides_per_junction = 5,include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"), output_format="nice_table")
+
 guide_table
 ```
+
+<img src="inst/figures/predictions_table.png"/>
 
 ## Citation
 

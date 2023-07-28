@@ -5,6 +5,7 @@
 #' @param output_format Either return the table as a dataframe or flextable, default=dataframe
 #' @param include_specific_junctions provide list of junctions for guide RNA prediction
 #' @param leafcutter_input output from running isoviz_minicutter
+#' @param output_format set to dataframe to obtain a regular dataframe object, to obtain a nice table, choose "nice_table"
 #' @return table
 #' @examples
 #' isoviz_get_guide_predictions()
@@ -19,9 +20,10 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
 
   print("Loading gencode sgRNA prediction file")
   # 1. load most up-to-date gencode_predictions file (this will be updated)
-  gencode_predictions <- system.file("data", "gencode_predictions.rda.gz", package="isoviz")
+  gencode_predictions <- system.file("data", "230728_gencodev41_final_TIGER_predictions_to_compare.rda.gz", package="isoviz")
   gencode_predictions <- gzfile(gencode_predictions, "rb")
   load(gencode_predictions)
+  gencode_predictions = tiger_pred_out
 
   # ranking of prediction score -> values 0 to 1
   # min_score = min(gencode_predictions$predicted_lfc)
@@ -66,7 +68,8 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
   #           title = paste0(gene_name, ": Top ", guides_per_junction, " gRNAs per Junction"))
   if(output_format == "dataframe"){
     table_return = filtered_guide_info
-  }else{
+  }
+  if(output_format == "nice_table"){
     table_return = nice_table(filtered_guide_info,
                               title = paste0(gene_name, ": Top ", guides_per_junction, " gRNAs per Junction"))
   }

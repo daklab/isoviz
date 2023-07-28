@@ -189,7 +189,6 @@ isoviz_rescale_introns = function(introns, exons,
     nas = nas[order(-exon_num)]
 
     for(i in 1:nrow(nas)){
-      print(i)
       trans = nas$transcript_name[i]
       exons = filter(ref_attach_to, transcript_name == trans) #all the non NA exons
       exon_n = nas$exon_num[i]

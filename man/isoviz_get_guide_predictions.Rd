@@ -24,7 +24,7 @@ isoviz_get_guide_predictions(
 
 \item{leafcutter_input}{output from running isoviz_minicutter}
 
-\item{output_format}{Either return the table as a dataframe or flextable, default=dataframe}
+\item{output_format}{set to dataframe to obtain a regular dataframe object, to obtain a nice table, choose "nice_table"}
 }
 \value{
 table

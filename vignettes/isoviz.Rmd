@@ -160,7 +160,7 @@ Finally, if you are interested in obtaining a list of sgRNAs that you could use 
 
 guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts,
                                            guides_per_junction = 5, 
-                                           include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"))
+                                           include_specific_junctions = c("junc178147", "junc178149", "junc178135", "junc178136", "junc178145", "junc178146"), output_format="nice_table")
 
 guide_table
 
