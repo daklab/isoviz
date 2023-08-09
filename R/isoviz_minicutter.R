@@ -50,10 +50,10 @@ calculate_usage_ratios = function(juncs) {
 
 leafcutter_one_step = function(juncs) {
 
-  juncs = juncs %>% select("chrom", "strand", "start", "end", "name", "readcount")
+  juncs = juncs %>% dplyr::select("chrom", "strand", "start", "end", "name", "readcount")
   splice_sites = bind_rows(
-    juncs %>% select(chrom, strand, position = start),
-    juncs %>% select(chrom, strand, position = end)) %>%
+    juncs %>% dplyr::select(chrom, strand, position = start),
+    juncs %>% dplyr::select(chrom, strand, position = end)) %>%
     distinct() %>%
     arrange(chrom, strand, position) %>%
     mutate(idx = 1:n())
@@ -102,7 +102,7 @@ isoviz_minicutter = function(juncs_file, min_junction_reads=1, plot_summary=TRUE
     separate(blockSizes, into = c("five.p", "three.p"), sep = ",") %>%
     mutate(five.p = as.integer(five.p), three.p = as.integer(three.p)) %>%
     mutate(start = start + five.p, end = end - three.p + 1) %>%
-    select(chrom = chrom, start, end, name = junc.name, readcount = score, strand = strand)
+    dplyr::select(chrom = chrom, start, end, name = junc.name, readcount = score, strand = strand)
 
   juncs = leafcutter_one_step(juncs)
 

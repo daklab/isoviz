@@ -41,7 +41,7 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
 
   # leafcutter junction counts minicutter input load
   juncs_recluster = leafcutter_input
-  juncs_recluster %<>% select(everything(), junc.counts = readcount, Usage = usage_ratio) %>% dplyr::group_by(cluster_idx) %>%
+  juncs_recluster %<>% dplyr::select(everything(), junc.counts = readcount, Usage = usage_ratio) %>% dplyr::group_by(cluster_idx) %>%
     dplyr::mutate(cluster.counts = sum(junc.counts), Usage = round(Usage, 2)) %>% ungroup()
 
   all_guide_info = filtered_predictions %>%

@@ -96,16 +96,19 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
     plot_title = paste0(df$gene_name[1], " Junction to Isoform Map (" , to_plot_ordered$strand[1], " strand )")
   }
   
+  segment_data <- to_plot_ordered %>%
+    group_by(transcript_name) %>%
+    slice_head(n = 1)
+  
   p1 = ggplot() +
-    geom_segment(aes(x = to_plot_ordered$start, y = to_plot_ordered$trans_order,
-                     xend = to_plot_ordered$seg_end, yend = to_plot_ordered$trans_order)) +
+    geom_segment(data = segment_data, aes(x = start, y = trans_order, xend = seg_end, yend = trans_order)) +
     geom_rect(data = to_plot_ordered, mapping = aes(xmin = blockstarts, xmax = blockends, ymin = trans_order - 0.3, ymax = trans_order + 0.3)) +
     xlim(min_start, max_end) + ylim(0,y_max) +
-    geom_text(aes(x = Inf, y = to_plot_ordered$trans_order, hjust = -0.1, label = to_plot_ordered$transcript_name), size = 3, check_overlap = TRUE) +
+    geom_text(aes(x = Inf, y = to_plot_ordered$trans_order, label = to_plot_ordered$transcript_name), hjust = 0, vjust = 0.5, size = 3, check_overlap = TRUE) +
     theme_bw() + ylab("") + xlab("") +
     theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(),
           axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "top",
-          plot.title = element_text(hjust = 0.5), plot.margin = margin(0.1,1,0,0.1, "in")) +
+          plot.title = element_text(hjust = 0.5), plot.margin = margin(0.1,2,0,0.1, "in")) +
     ggtitle(plot_title) +
     coord_cartesian(xlim = c(min_start, max_end), clip = 'off')
 

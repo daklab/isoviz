@@ -25,7 +25,10 @@ Depends:
     magrittr,
     ggsci,
     cowplot,
-    rempsyc
+    rempsyc,
+    GenomicFeatures,
+    progress,
+    R.utils
 Suggests: 
     knitr,
     rmarkdown

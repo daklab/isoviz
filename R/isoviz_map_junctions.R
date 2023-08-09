@@ -38,7 +38,7 @@ isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutt
     arrange(cluster_idx)
 
   # get additional columns from the gencode_intron_all_data file- fixed bug here creating redundant isoform name columns
-  gencode_intron_all_data %<>% select(-transcript_isoforms)
+  gencode_intron_all_data %<>% dplyr::select(-transcript_isoforms)
   gene_cluster = gene_cluster %>%
     left_join(gencode_intron_all_data, by=c("chr" = "chr", "intron_starts" = "junc_start", "intron_ends"="junc_end", "strand", "gene_id", "gene_name", "gene_type"))
 

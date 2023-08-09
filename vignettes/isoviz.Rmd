@@ -24,34 +24,44 @@ Our package aims to help quantify and visualize the transcript isoforms that are
 
 # Exemplary workflow
 
-We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data. You can also input your own psl file (gtf file as well in the future).
+# Step 1: Formatting Input, transcript coords
+We start off by loading our exon and intron coordinates for all transcripts. By default, this will use 'gencode.v41.basic annotation' data. You can also input your own psl file (gtf file as well in the future).
 
 ```{r}
+# if you want to use our pre-loaded gencode v41 basic annotations, use this code
 file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
 gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz")
 
 all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
-```
 
-```{r}
+
+
+# if you want to use your own psl or gtf file (including output from a long read sequencing experiment), use this code
+#file_path <- "" # input your path here for the gtf/psl file
+#gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz") # you can still use this file, transcripts that don't match gencode 41 basics will be marked as novel
+#count_file <- "" # this parameter is options, but if you have a file with read counts per transcript from a long read sequencing experiment, you can input the path here. Expected format is two columns, tab-delimited, with trans.id_gene.id and readcounts columns, no header
+
+#all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl", count_file, min_count = 5)  
+
 # Let's extract the exon coordinates 
 exon_coords <- all_coordinates[[1]]
 
 # And now the intron coordinates 
 intron_coords <- all_coordinates[[2]]
+
 ```
 
+# Step 2: Formatting Input, short read counts with LeafCutter
 We will first need to load our leafcutter junctions that we obtained by running Regtools extract junctions on our BAM files. You can use one of our preloaded cell types or first run this on your own BAM file and then use as input for this function. We will look at junctions in hESC data. We will first need to run 'minicutter' to cluster the junction coordinates and obtain intron cluster events.
 
 ```{r}
-
 # load junctions for cell type of interest or input your own
 junctions <- system.file("data", "21c_hESC_RB2_empty_v41_basic.junc", package="isoviz")
 
 # run minicutter to get clusters 
 intron_clusts <- isoviz_minicutter(juncs_file = junctions)
 ```
-
+# This reads in a table we created for gencode v41, providing additional junction information like uniqueness
 Let's take a look at how junctions were grouped into intron clusters. Note, some of these clusters will only contain one junction (singleton). You will have the option to change this when running isoviz_minicutter.
 
 ```{r}
@@ -61,28 +71,24 @@ intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package
 load(intron_annotations)
 ```
 
-Let's make a basic plot of the isoforms for the gene RBFOX2. We will also look at how to rescale the coordinates in case the gene has very long introns.
+Step 3: Overlap exon/intron coords with leafcutter counts for a specific gene
+Let's work with RBFOX2. Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. Make sure to check strand of gene!
 
 ```{r}
 gene = "RBFOX2"
 gene_exons <- filter(exon_coords, gene_name == gene)
 gene_introns <- filter(intron_coords, gene_name == gene)
 
+mapped_junctions = isoviz_map_junctions(cell_type = "hESC", gene_introns, intron_clusts, gencode_intron_all_data)
+
 # let's rescale the intron coordinates but keep the relative exon alignments 
 # this step will return an updated dataframe of exon coordinates that we can use 
 # with our plotting function
 
-rescaled_coords = isoviz_rescale_introns(gene_introns, gene_exons, width_rescale=10) 
+#rescaled_coords = isoviz_rescale_introns(gene_introns, gene_exons, width_rescale=10) 
 ```
 
-Let's continue working on RBFOX2. Now we have to map the observed junctions with their corresponding exons and transcript isoforms. To do this, we will use the `isoviz_map_junctions` function. Make sure to check strand of gene!
-
-```{r}
-mapped_junctions = isoviz_map_junctions(cell_type = "hESC", gene_introns, intron_clusts, gencode_intron_all_data)
-
-```
-
-Now we are ready to make a plot!
+Step 4: Make a plot!
 
 ```{r}
 isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
@@ -153,7 +159,8 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
 
 ```
 
-Finally, if you are interested in obtaining a list of sgRNAs that you could use to target specific junctions with Cas13, you can do the following:
+Step 5: Guide Predictions
+Finally, if you are interested in obtaining a list of gRNAs that you could use to target specific junctions with Cas13, you can do the following:
 
 ```{r}
 #library(flextable)
