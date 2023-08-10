@@ -3,6 +3,7 @@
 export(gtf_to_psl)
 export(isoviz_coords)
 export(isoviz_get_guide_predictions)
+export(isoviz_junction_to_transcript_summary)
 export(isoviz_map_junctions)
 export(isoviz_minicutter)
 export(isoviz_plot_juncs_to_iso)
