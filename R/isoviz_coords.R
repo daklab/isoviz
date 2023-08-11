@@ -81,7 +81,7 @@ isoviz_coords = function(file_path, gene_trans,
   print(paste(length(unique(intron_data$trans_id)), "transcripts with at least one intron!"))
 
   # Convert to gene and transcript names (should this be placed somewhere else?)
-  convert = read_tsv(gene_trans, col_names = TRUE)
+  convert = fread(gene_trans)
 
   # Should avoid selecting columns this way
   #trans_info = genome_data %>% dplyr::select(1, 4, 5, 6) %>% distinct() %>% filter(chr != "chrY", chr != "chrM")
@@ -93,7 +93,7 @@ isoviz_coords = function(file_path, gene_trans,
     left_join(convert, by = c("gene_id", "trans_id", "gene_name", "gene_type")) %>% 
     dplyr::select(chr, intron_starts, intron_ends, gene_id, trans_id, strand, gene_name, transcript_name, gene_type, transcript_type)
     
-  id = intron_data %>% dplyr::select(gene_id, trans_id) %>% distinct() %>% arrange(gene_id, desc(trans_id)) %>%
+  id = intron_data %>% dplyr::select(gene_id, trans_id) %>% distinct() %>% dplyr::arrange(gene_id, desc(trans_id)) %>%
     group_by(gene_id) %>% mutate(id = 1:n()) %>% ungroup()
     
   intron_data$transcript_name[intron_data$transcript_name == ""] <- NA

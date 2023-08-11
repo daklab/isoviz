@@ -110,7 +110,7 @@ isoviz_junction_to_transcript_summary = function(iso_intron_data, type = "gencod
             legend.position = "top") +
       guides(fill = guide_legend(title = "", nrow = 2, byrow = TRUE))
     
-    ggsave(plot_path, width = 5, height = 4)
+    ggsave(plot_path, width = 6, height = 4)
     
   }
   

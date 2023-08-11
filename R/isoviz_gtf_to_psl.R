@@ -22,7 +22,7 @@
 
 # gtf_file_path = "/Users/kisaev/Downloads/gencode.v41.basic.annotation.gtf.gz"
 
-gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl", chrom_sizes=NULL){
+isoviz_gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl", specie="human", chrom_sizes=NULL){
   
   # Read the GTF file using fread
   gtf_data <- fread(gtf_file_path, header = FALSE)
@@ -33,12 +33,17 @@ gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl", chrom_
   # Extract relevant columns
   print("Extracting info from gtf file to compile all exon information...")
   
-  system.time({
+  if (specie=="human") {
     attributes <- gtf_data$V9
     trans_id <- gsub('.*"(ENST\\d+\\.\\d+)".*', '\\1', attributes)
     this_transcript <- sub(".*\"(ENST\\d+\\.\\d+)\".*", "\\1", trans_id)
-    gene_ids <- gsub('.*"(ENSG\\d+\\.\\d+)".*', '\\1', attributes)
-  })
+    gene_ids <- gsub('.*"(ENSG\\d+\\.\\d+)".*', '\\1', attributes)}
+  
+  if (specie=="mouse") {
+    attributes <- gtf_data$V9
+    trans_id <- gsub('.*"(ENSMUST\\d+\\.\\d+)".*', '\\1', attributes)
+    this_transcript <- sub(".*\"(ENSMUST\\d+\\.\\d+)\".*", "\\1", trans_id)
+    gene_ids <- gsub('.*"(ENSMUSG\\d+\\.\\d+)".*', '\\1', attributes)}
   
   # Create an empty data frame to store exon information
   exons_df <- data.frame(
@@ -124,8 +129,13 @@ gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl", chrom_
     }
     
     qstarts_str <- paste(qstarts, collapse = ",")
+    qstarts_str <- paste(qstarts_str, ",", sep = "")
+    
     blocksizes_str <- paste(blocksizes, collapse = ",")
+    blocksizes_str <- paste(blocksizes_str, ",", sep = "")
+    
     blockstarts_str <- paste(blockstarts, collapse = ",")
+    blockstarts_str <- paste(blockstarts_str, ",", sep = "")
     
     # Construct the PSL formatted output line
     psl_line <- c(
@@ -135,9 +145,12 @@ gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl", chrom_
     # Convert psl_line to a tab-separated string
     psl_line_str <- paste(psl_line, collapse = "\t")
     
-    # Write the line to the file
-    writeLines(psl_line_str, con)
-    cat("\n", file = con)
+    if (nzchar(psl_line_str)) {
+      # Write the line to the file
+      writeLines(psl_line_str, con)
+      #cat("\n", file = con)
+    }
+  
   }
   
   close(con)

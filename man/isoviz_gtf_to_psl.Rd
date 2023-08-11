@@ -2,12 +2,12 @@
 % Please edit documentation in R/isoviz_gtf_to_psl.R
 \name{isoviz_gtf_to_psl}
 \alias{isoviz_gtf_to_psl}
-\alias{gtf_to_psl}
 \title{A function for converting gtf to psl}
 \usage{
-gtf_to_psl(
+isoviz_gtf_to_psl(
   gtf_file_path,
   psl_output_file = "converted_gtf.psl",
+  specie = "human",
   chrom_sizes = NULL
 )
 }
