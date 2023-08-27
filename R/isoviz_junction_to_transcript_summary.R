@@ -20,11 +20,11 @@ isoviz_junction_to_transcript_summary = function(iso_intron_data, type = "gencod
   }
   
   # filter for protein coding and lncRNA genes
-  iso_intron_pc = iso_intron_data %>% filter(gene_type == "protein_coding" | gene_type == "lncRNA")
+  iso_intron_pc = iso_intron_data %>% dplyr::filter(gene_type == "protein_coding" | gene_type == "lncRNA")
   
   # filter for protein-coding and lncRNA transcripts- we can only do this for gencode annotations since we wont have this info for novel transcripts in long read data
   if(type == "gencode"){
-    iso_intron_pc %<>% filter(transcript_type == "protein_coding" | transcript_type == "lncRNA")
+    iso_intron_pc %<>% dplyr::filter(transcript_type == "protein_coding" | transcript_type == "lncRNA")
   }
   
   # remove transcript ids and collapse on junction coords- this gives the total number of junctions in your annotations
@@ -45,7 +45,8 @@ isoviz_junction_to_transcript_summary = function(iso_intron_data, type = "gencod
   # the logic here has to be in the right order for the ifelse statement
   nrow(iso_intron_pc) # 696,609
   iso_pc_df = iso_intron_pc %>% full_join(n_df, by = c("gene_id", "trans_id")) %>%
-    dplyr::group_by(chr, intron_starts, intron_ends, gene_id, strand, gene_name, n_transcripts_per_gene) %>% mutate(n_trans_per_junc = n(), commonality = round((n_trans_per_junc/n_transcripts_per_gene)*100, 0)) %>%
+    dplyr::group_by(chr, intron_starts, intron_ends, gene_id, strand, gene_name, n_transcripts_per_gene) %>% 
+    dplyr::mutate(n_trans_per_junc = n(), commonality = round((n_trans_per_junc/n_transcripts_per_gene)*100, 0)) %>%
     dplyr::mutate(junction_category = ifelse(n_transcripts_per_gene == 1 & n_trans_per_junc == 1, "single_isoform", 
                                       ifelse(n_trans_per_junc == 1, "fully_unique", ifelse(commonality == 100, "common", "partially_unique")))) %>% ungroup()
   

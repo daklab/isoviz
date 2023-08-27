@@ -34,10 +34,10 @@ isoviz_coords = function(file_path, gene_trans,
     #print(paste("The input file being used is"), file_path)
     genome_data <- fread(file_path)
   }
-    
+  
   genome_data$gene_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][2]})
   genome_data$trans_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][1]})
-
+  
   # Get coordinates for each "block"
   genome_data$blocksizes = sapply(genome_data$V19, function(x){paste(strsplit(x, ",")[[1]], collapse=",")})
   genome_data$blockstarts = sapply(genome_data$V21, function(x){paste(strsplit(x, ",")[[1]], collapse=",")})
@@ -50,39 +50,44 @@ isoviz_coords = function(file_path, gene_trans,
   # Clean up and seperate blocks into rows
   # Need to do different adjustments here to get intron coords that will line up with leafcutter
   genome_data = genome_data %>% dplyr::select(chr, start, end, trans_id, gene_id,strand, blocksizes, blockstarts,
-                                          transcript_length) %>% separate_rows(blocksizes, blockstarts)
+                                              transcript_length) %>% separate_rows(blocksizes, blockstarts)
   genome_data$blockstarts=as.numeric(genome_data$blockstarts)
   genome_data$blocksizes=as.numeric(genome_data$blocksizes)
   genome_data$blockends = genome_data$blockstarts + genome_data$blocksizes
+  
+  transcript_ids = unique(genome_data$trans_id)
+  print(length(transcript_ids)) # 116,566
 
   print(paste(length(unique(genome_data$trans_id)), "transcripts with at least one intron!"))
-
-  # for each transcript
-  # exon end = intron start (except for last exon)
-  # exon start = intron end (except for the first exon)
-
-  intron_starts = genome_data %>%
-          group_by(trans_id) %>%
-          dplyr::slice(1:(n()-1)) %>%
-          dplyr::select(blockends)
-
-  intron_ends = genome_data %>%
-          group_by(trans_id) %>%
-          dplyr::slice(2:n()) %>%
-          dplyr::select(blockstarts)
-
-  intron_ends$trans_id = NULL
-  intron_data = cbind(intron_starts, intron_ends)
-  intron_data = as.data.frame(intron_data)
-  colnames(intron_data) = c("trans_id", "intron_starts", "intron_ends")
-
-  # Important note: this no longer has single exon transcripts
-  intron_data$intron_ends = intron_data$intron_ends+1
+  
+  # Split the data frame by trans_id
+  list_of_data <- split(genome_data, genome_data$trans_id)
+  
+  # Process each data frame in the list
+  result <- lapply(list_of_data, function(data){
+    new_ends <- data$blockstarts[-1] + 1
+    len <- nrow(data)
+    new_starts <- data$blockends[-len]
+    n <- len - 1
+    
+    list(
+      trans_id = rep(data$trans_id[1], n),
+      intron_starts = new_starts,
+      intron_ends = new_ends
+    )
+  })
+  
+  # Convert the list of lists back to three vectors
+  trans_id <- unlist(lapply(result, `[[`, "trans_id"))
+  intron_starts <- unlist(lapply(result, `[[`, "intron_starts"))
+  intron_ends <- unlist(lapply(result, `[[`, "intron_ends"))
+  intron_data = data.frame(trans_id, intron_starts, intron_ends) # 723,230
+  
   print(paste(length(unique(intron_data$trans_id)), "transcripts with at least one intron!"))
-
+  
   # Convert to gene and transcript names (should this be placed somewhere else?)
-  convert = fread(gene_trans)
-
+  convert = read_tsv(gene_trans, col_names = TRUE)
+  
   # Should avoid selecting columns this way
   #trans_info = genome_data %>% dplyr::select(1, 4, 5, 6) %>% distinct() %>% filter(chr != "chrY", chr != "chrM")
   #intron_data = intron_data %>% left_join(trans_info,  by = "trans_id") %>%
@@ -92,15 +97,15 @@ isoviz_coords = function(file_path, gene_trans,
     left_join(dplyr::select(convert, "gene_id", "gene_name", "gene_type") %>% distinct, by = "gene_id") %>%
     left_join(convert, by = c("gene_id", "trans_id", "gene_name", "gene_type")) %>% 
     dplyr::select(chr, intron_starts, intron_ends, gene_id, trans_id, strand, gene_name, transcript_name, gene_type, transcript_type)
-    
+  
   id = intron_data %>% dplyr::select(gene_id, trans_id) %>% distinct() %>% dplyr::arrange(gene_id, desc(trans_id)) %>%
-    group_by(gene_id) %>% mutate(id = 1:n()) %>% ungroup()
-    
+    group_by(gene_id) %>% dplyr::mutate(id = 1:n()) %>% ungroup()
+  
   intron_data$transcript_name[intron_data$transcript_name == ""] <- NA
   intron_data %<>% left_join(id, by = c("gene_id", "trans_id"))  %>% 
     mutate(transcript_name = ifelse(is.na(transcript_name), paste0(gene_name, "-novel", id), transcript_name)) %>% 
     ungroup() %>% dplyr::select(-id)
-    
+  
   # if a count file is provided, incorporate that here and filter
   if(count_file != ""){
     counts = read_tsv(count_file, col_names = FALSE)
@@ -108,21 +113,21 @@ isoviz_coords = function(file_path, gene_trans,
     counts$trans_id = sapply(counts$X1, function(x){strsplit(x, "_")[[1]][1]})
     counts %<>% dplyr::select(gene_id, trans_id, read_counts = X2)
     intron_data %<>% left_join(counts, by = c("gene_id", "trans_id"))
-      
+    
     intron_data %<>% filter(read_counts >= min_count)
-      
+    
     # tpm
     per_million = sum(counts$read_counts)/1000000
     intron_data %<>% mutate(tpm = round(read_counts/per_million, 2))
-      
-  }
     
+  }
+  
   # get file of all transcripts and their transcript names, mostly care about the novel id's here
   novel_ids = intron_data %>% dplyr::select(trans_id, novel_name = transcript_name) %>% distinct()
-    
+  
   # Final intron dataset
   iso_intron_data = as.data.table(intron_data)
-
+  
   # Final exon dataset
   genome_data %<>% 
     left_join(dplyr::select(convert, "gene_id", "gene_name", "gene_type") %>% distinct, by = "gene_id") %>%
@@ -131,6 +136,6 @@ isoviz_coords = function(file_path, gene_trans,
     left_join(novel_ids, by = "trans_id") %>%
     mutate(transcript_name = ifelse(is.na(transcript_name), novel_name, transcript_name)) %>% dplyr::select(-novel_name)
   iso_exon_data = as.data.table(genome_data)
-
+  
   return(list(iso_exon_data, iso_intron_data))
 }

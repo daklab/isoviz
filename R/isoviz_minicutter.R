@@ -11,7 +11,7 @@
 #'
 
 plot_cluster_sizes = function(juncs) {
-  cluster_sizes = juncs %>% group_by(cluster_idx) %>% summarize(n = n()) %>% ungroup()
+  cluster_sizes = juncs %>% group_by(cluster_idx) %>% dplyr::summarize(n = n()) %>% ungroup()
   ta = table(cluster_sizes$n)
   tibble(
     cluster_size = as.numeric(names(ta)),
@@ -56,7 +56,7 @@ leafcutter_one_step = function(juncs) {
     juncs %>% dplyr::select(chrom, strand, position = end)) %>%
     distinct() %>%
     arrange(chrom, strand, position) %>%
-    mutate(idx = 1:n())
+    dplyr::mutate(idx = 1:n())
 
   juncs = juncs %>%
     left_join(splice_sites, by = c(chrom = "chrom", strand = "strand", start = "position")) %>%
