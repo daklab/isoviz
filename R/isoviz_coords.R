@@ -125,6 +125,9 @@ isoviz_coords = function(file_path, gene_trans,
   # get file of all transcripts and their transcript names, mostly care about the novel id's here
   novel_ids = intron_data %>% dplyr::select(trans_id, novel_name = transcript_name) %>% distinct()
   
+  print("Printing dimensions of intron data file")
+  print(dim(intron_data))
+  
   # Final intron dataset
   iso_intron_data = as.data.table(intron_data)
   
