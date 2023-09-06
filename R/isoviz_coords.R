@@ -4,7 +4,7 @@
 #' Inputs gencode gtf or psl file, outputs exon coords (for plotting) and
 #' intron coords (for leafcutter integration) with ENSG/ENST names plus
 #' meaningful names (ex RBFOX2)
-#' @param file_path Gencode gtf or psl file
+#' @param file_path Gencode PSL file! (can be custom PSL file though)
 #' @param gene_trans Dataframe with ensembl gene and transcript ids and names
 #' @param input_type Either 'psl' or 'gtf' for input file type. Default is psl.
 #' @param count_file User can provide a read count file per transcript from a long read experiment
@@ -24,16 +24,10 @@
 
 
 isoviz_coords = function(file_path, gene_trans,
-                         input_type="psl", count_file = "", min_count = 5){
-  if(input_type=="gtf"){
-    isoviz_gtf_to_psl(file_path, psl_output_file = "converted_gtf.psl", chrom_sizes=NULL)
-    genome_data <- fread(psl_output_file)
-  }
+                         count_file = "", min_count = 5){
   
-  if(input_type=="psl"){
-    #print(paste("The input file being used is"), file_path)
-    genome_data <- fread(file_path)
-  }
+  print("Please ensure your input file is a PSL file~")
+  genome_data <- fread(file_path)
   
   genome_data$gene_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][2]})
   genome_data$trans_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][1]})
@@ -54,10 +48,10 @@ isoviz_coords = function(file_path, gene_trans,
   genome_data$blockstarts=as.numeric(genome_data$blockstarts)
   genome_data$blocksizes=as.numeric(genome_data$blocksizes)
   genome_data$blockends = genome_data$blockstarts + genome_data$blocksizes
+  genome_data = as.data.table(genome_data)
+  genome_data = unique(genome_data)
   
   transcript_ids = unique(genome_data$trans_id)
-  print(length(transcript_ids)) # 116,566
-
   print(paste(length(unique(genome_data$trans_id)), "transcripts with at least one intron!"))
   
   # Split the data frame by trans_id
@@ -82,24 +76,30 @@ isoviz_coords = function(file_path, gene_trans,
   intron_starts <- unlist(lapply(result, `[[`, "intron_starts"))
   intron_ends <- unlist(lapply(result, `[[`, "intron_ends"))
   intron_data = data.frame(trans_id, intron_starts, intron_ends) # 723,230
-  
+  intron_data = unique(intron_data)
   print(paste(length(unique(intron_data$trans_id)), "transcripts with at least one intron!"))
   
   # Convert to gene and transcript names (should this be placed somewhere else?)
-  convert = read_tsv(gene_trans, col_names = TRUE)
+  convert = as.data.table(read_tsv(gene_trans, col_names = TRUE, show_col_types = FALSE))
+  convert = unique(convert)
   
-  # Should avoid selecting columns this way
-  #trans_info = genome_data %>% dplyr::select(1, 4, 5, 6) %>% distinct() %>% filter(chr != "chrY", chr != "chrM")
-  #intron_data = intron_data %>% left_join(trans_info,  by = "trans_id") %>%
-  #  left_join(convert, by = c("gene_id", "trans_id")) %>% select(4, 2, 3, 5, 1, 6, 7, 8, 9, 10)
-  trans_info = genome_data %>% dplyr::select(chr, trans_id, gene_id, strand) %>% distinct() %>% filter(chr != "chrY", chr != "chrM")
+  trans_info = as.data.table(genome_data %>% dplyr::select(chr, trans_id, gene_id, strand) %>% 
+    distinct() %>% filter(chr != "chrY", chr != "chrM"))
+  trans_info = unique(trans_info)
+  
   intron_data %<>% left_join(trans_info,  by = "trans_id") %>%
-    left_join(dplyr::select(convert, "gene_id", "gene_name", "gene_type") %>% distinct, by = "gene_id") %>%
+    left_join(dplyr::select(convert, "gene_id", "gene_name", "gene_type") %>% 
+                distinct, by = "gene_id") %>%
     left_join(convert, by = c("gene_id", "trans_id", "gene_name", "gene_type")) %>% 
     dplyr::select(chr, intron_starts, intron_ends, gene_id, trans_id, strand, gene_name, transcript_name, gene_type, transcript_type)
   
-  id = intron_data %>% dplyr::select(gene_id, trans_id) %>% distinct() %>% dplyr::arrange(gene_id, desc(trans_id)) %>%
-    group_by(gene_id) %>% dplyr::mutate(id = 1:n()) %>% ungroup()
+  id = intron_data %>% 
+      dplyr::select(gene_id, trans_id) %>% 
+      distinct() %>% 
+      dplyr::arrange(gene_id, desc(trans_id)) %>%
+      group_by(gene_id) %>% 
+      dplyr::mutate(id = 1:n()) %>% 
+      ungroup()
   
   intron_data$transcript_name[intron_data$transcript_name == ""] <- NA
   intron_data %<>% left_join(id, by = c("gene_id", "trans_id"))  %>% 

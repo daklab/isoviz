@@ -8,11 +8,11 @@
 
 The goal of isoviz is to simplify designing isoform-centric experiments, especially CRISPR-based ones.
 
-We are actively working to make improvements for Isoviz, so please let us know what features would be helpful. 
+We are actively working to make improvements for Isoviz, so please let us know what features would be helpful.
 
 ## Installation
 
-Note, the package has thus far been tested under R version 4.3.0. Before installing, please start a new R session to clear any pre-loaded packages that may interfere. 
+Note, the package has thus far been tested under R version 4.3.0. Before installing, please start a new R session to clear any pre-loaded packages that may interfere.
 
 You can install the development version of isoviz from [GitHub](https://github.com/) with:
 
@@ -36,10 +36,7 @@ library(isoviz)
 
 Our package aims to help quantify and visualize the transcript isoforms that are present in your samples. The figure below depicts isoviz's workflow as well as the required inputs and expected outputs.
 
-There are a few initial decisions to make, depending on what RNA sequencing data you already have available:
-1. If you have long read RNA-sequencing data for your cell type of interest, we recommend using that data to generate a psl or gtf file of expressed isoforms as input for isoviz_coords(). Otherwise, you can use the GENCODE v41 basic annotations psl that we have pre-loaded.
-2. If you have Illumina short read RNA-sequencing data for your cell type of interest, we recommend using that data to generate a regtools junction count file for input into isoviz_minicutter(). Otherwise, you can choose from our pre-loaded cell line data. Currently, we include HUES66 human embryonic stem cells, HEK293, and A375, but hope to add more soon.
-3. The remaining functions are gene and junction specific, requiring a gene name or Ensembl ID as input. Isoviz plots transcript structures of a given gene and integrates junction level coordinates and counts obtained with Regtools with isoforms. You can choose to visualize only the transcript isoforms that are detected in your sample and see how they group into leafuctter intron clusters.
+There are a few initial decisions to make, depending on what RNA sequencing data you already have available: 1. If you have long read RNA-sequencing data for your cell type of interest, we recommend using that data to generate a psl or gtf file of expressed isoforms as input for isoviz_coords(). Otherwise, you can use the GENCODE v41 basic annotations psl that we have pre-loaded. 2. If you have Illumina short read RNA-sequencing data for your cell type of interest, we recommend using that data to generate a regtools junction count file for input into isoviz_minicutter(). Otherwise, you can choose from our pre-loaded cell line data. Currently, we include HUES66 human embryonic stem cells, HEK293, and A375, but hope to add more soon. 3. The remaining functions are gene and junction specific, requiring a gene name or Ensembl ID as input. Isoviz plots transcript structures of a given gene and integrates junction level coordinates and counts obtained with Regtools with isoforms. You can choose to visualize only the transcript isoforms that are detected in your sample and see how they group into leafuctter intron clusters.
 
 <img src="inst/figures/readme_main.png"/>
 
@@ -47,28 +44,38 @@ There are a few initial decisions to make, depending on what RNA sequencing data
 
 #### Step 1: Generate exon and intron coordinate tables
 
-We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data (see below). 
+We start off by loading all our exon and intron coordinates. By default, this will use 'gencode.v41.basic annotation' data (see below).
 
 ``` r
-library(isoviz)
+library(isoviz) # or suppressMessages(library(isoviz))
 
 ## default input file
 file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
 gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz")
 
-all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
+all_coordinates <- isoviz_coords(file_path, gene_trans) #use default genome .psl file  
 ```
 
-Alternatively, you can also input your own psl or gtf file (either from another GENCODE version or from a long read RNA-sequencing experiment).
+Alternatively, you can also input your own psl or gtf file (either from another GENCODE version or from a long read RNA-sequencing experiment). Make sure to first convert your gtf file to a psl file as shown below.
 
 ``` r
-library(isoviz)
+## custom gtf input file
+gtf_input <- "/path_to_annotation_file/annotation.gtf"
 
-## custom input file
-file_path <- "/path_to_annotation_file/annotation.psl"
-gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz")
+## first convert to PSL file 
+isoviz_gtf_to_psl(
+  gtf_input,
+  psl_output_file = "psl_input_for_isoviz.psl",
+  chrom_sizes = NULL
+)
+file_path = "psl_input_for_isoviz.psl"
 
-all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") # change input_type to gtf if using gtf format 
+## you can also generate your own gene_transcript_convert.txt file with your gtf file of interest 
+isoviz_get_gene_transcript_conversion(gtf_input, output_file="gene_transcript_convert.txt")
+
+gene_trans="gene_transcript_convert.txt"
+  
+all_coordinates <- isoviz_coords(file_path, gene_trans) # change input_type to gtf if using gtf format 
 ```
 
 Let's look at the exon coordinates
@@ -108,7 +115,7 @@ load(intron_annotations)
 
 #### Step 3: Plotting isoforms and junction and cluster information
 
-This is where you need to select a gene; we will look at RBFOX2. This is where we integrate the isoform-level information from Step 1 with the junction-level information from Step 2. To do this, we will use the `isoviz_map_junctions` function. 
+This is where you need to select a gene; we will look at RBFOX2. This is where we integrate the isoform-level information from Step 1 with the junction-level information from Step 2. To do this, we will use the `isoviz_map_junctions` function.
 
 ``` r
 gene = "RBFOX2"
@@ -117,7 +124,6 @@ gene_introns <- filter(intron_coords, gene_name == gene) # intron_coords from St
 
 # intron_clusts and gencode_intron_all_data from Step 2
 mapped_junctions = isoviz_map_junctions(cell_type = "hESC", gene_introns, intron_clusts, gencode_intron_all_data) 
-
 ```
 
 Now we are ready to make a plot! You can choose to scale introns or not. If you choose not to scale introns, the x-axis will be in genome coordinates and therefore will be flipped for negatively stranded gene. Please pay attention to strand! Additionally, default settings will plot all isoforms and junctions.
@@ -160,9 +166,9 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
 
 #### Step 4: Obtain junction gRNA efficiency predictions (TIGER model) for a specific gene and junction.
 
-We have a table of TIGER predictions pre-loaded for all junctions in GENCODE v41 basic annotations. If a junction gRNA is missing, it is likely that gRNA does not have a unique sequence or has homopolymers (runs of C's, G's, T's or A's) and you should not use it. For junctions not present in GENCODE v41 or for designing gRNAs to exons, you can get TIGER predictions at tiger.nygenome.org (Wessels and Stirn et al. 2023). 
+We have a table of TIGER predictions pre-loaded for all junctions in GENCODE v41 basic annotations. If a junction gRNA is missing, it is likely that gRNA does not have a unique sequence or has homopolymers (runs of C's, G's, T's or A's) and you should not use it. For junctions not present in GENCODE v41 or for designing gRNAs to exons, you can get TIGER predictions at tiger.nygenome.org (Wessels and Stirn et al. 2023).
 
-To interpret TIGER scores based on expected gRNA efficiency, you can refer to Figure 5 of our manuscript. In our experience, for single gene experiments, we recommend trying the top two predicted gRNAs per junction. In our group, we consider gRNAs with score > 0.2 to be likely active. 
+To interpret TIGER scores based on expected gRNA efficiency, you can refer to Figure 5 of our manuscript. In our experience, for single gene experiments, we recommend trying the top two predicted gRNAs per junction. In our group, we consider gRNAs with score \> 0.2 to be likely active.
 
 ``` r
 guide_table = isoviz_get_guide_predictions(gene = "ENSG00000100320", leafcutter_input=intron_clusts,

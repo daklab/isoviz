@@ -7,6 +7,7 @@
 #' @param gtf_file_path User provided gtf file 
 #' @param psl_output_file Name for the PSL file to be outputted. Default is "converted_gtf.psl"
 #' @param chrom_sizes Chrom sizes file for psl conversion, recommended
+#' @param filter_CDS if "yes" then will only include CDS exons in the PSL output file
 #' @return psl formatted file
 #' @examples
 #' # Example with gtf file 
@@ -14,60 +15,50 @@
 #' @name isoviz_gtf_to_psl
 #' @export
 
-#  library(GenomicFeatures)
-#  library(progress)
-#  library(data.table)
-#  library(R.utils)      
-#  library(dplyr)
-
-# gtf_file_path = "/Users/kisaev/Downloads/gencode.v41.basic.annotation.gtf.gz"
-
-isoviz_gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl", specie="human", chrom_sizes=NULL){
+isoviz_gtf_to_psl = function(gtf_file_path, 
+                             psl_output_file="converted_gtf.psl", 
+                             specie="human", 
+                             filter_CDS="no",
+                             chrom_sizes=NULL){
   
-  # Read the GTF file using fread
-  gtf_data <- fread(gtf_file_path, header = FALSE)
-  
-  # Filter out lines that start with '#'
-  gtf_data <- gtf_data[!grepl("^#", V1)]  
+  # Read the GTF file 
+  # Use import.gff to read the GFF file into a GRanges object
+  gr <- import.gff(gtf_file_path)
+  gtf_data <- as.data.table(gr)
   
   # Extract relevant columns
-  print("Extracting info from gtf file to compile all exon information...")
+  print("Keeping only protein-coding and lncRNA genes")
+  gtf_data = dplyr::filter(gtf_data, gene_type %in% c("protein_coding", "lncRNA"))
   
-  if (specie=="human") {
-    attributes <- gtf_data$V9
-    trans_id <- gsub('.*"(ENST\\d+\\.\\d+)".*', '\\1', attributes)
-    this_transcript <- sub(".*\"(ENST\\d+\\.\\d+)\".*", "\\1", trans_id)
-    gene_ids <- gsub('.*"(ENSG\\d+\\.\\d+)".*', '\\1', attributes)}
+  # keep only the following columns 
+  exons_df = gtf_data %>% dplyr::select(seqnames, type, start, end, 
+                                        strand, transcript_id, gene_id)
   
-  if (specie=="mouse") {
-    attributes <- gtf_data$V9
-    trans_id <- gsub('.*"(ENSMUST\\d+\\.\\d+)".*', '\\1', attributes)
-    this_transcript <- sub(".*\"(ENSMUST\\d+\\.\\d+)\".*", "\\1", trans_id)
-    gene_ids <- gsub('.*"(ENSMUSG\\d+\\.\\d+)".*', '\\1', attributes)}
-  
-  # Create an empty data frame to store exon information
-  exons_df <- data.frame(
-    chrom = gtf_data$V1,
-    ty = gtf_data$V3,
-    start = as.integer(gtf_data$V4) - 1,
-    end = as.integer(gtf_data$V5),
-    strand = gtf_data$V7,
-    trans_id = this_transcript,
-    transcript_id = this_transcript, 
-    gene_id = gene_ids
-  )
-  
-  # Filter for ty == "CDS"
-  z <- which(exons_df$ty == "CDS")
-  cds_df <- exons_df[z,]
+  colnames(exons_df) = c("chrom", "ty", "start", "end", "strand", "transcript_id", "gene_id")
+  exons_df$start = exons_df$start-1
 
-  print("Filtered to just include CDS entries")
+  # Filter for ty == "CDS"
+  if (filter_CDS == "yes"){
+    z <- which(exons_df$ty == "CDS")
+    cds_df <- exons_df[z,]
+    print("Filtered to just include CDS entries")
+    
+  } else{
+    z <- which(exons_df$ty == "exon")
+    cds_df = exons_df[z,] # keep all exons
+    print("Filtered to include all exons")
+  }
   
   # Group and summarize exon information
+  cols_to_convert <- c("chrom", "ty", "strand", "transcript_id", "gene_id")
+  cds_df = as.data.frame(cds_df)
+  # Use lapply to convert specified columns
+  cds_df[cols_to_convert] <- lapply(cds_df[cols_to_convert], as.character)
+  
   exons_grouped <- cds_df %>%
     dplyr::group_by(transcript_id)
   
-  # Individual transcript groups with corresponding CDS 
+  # Individual transcript groups with corresponding exons 
   individual_groups <- exons_grouped %>%
     group_split()
   
@@ -111,7 +102,7 @@ isoviz_gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl",
     # total sizes of CDS blocks in transcripts 
     qsize <- sum(unlist(blocksizes))
     # combine transcript and gene ID
-    qname <- paste(test_ex$trans_id[1], '_', test_ex$gene_id[1], sep = "")
+    qname <- paste(test_ex$transcript_id[1], '_', test_ex$gene_id[1], sep = "")
     pos <- 0
     qstarts <- list(pos)
     
@@ -148,7 +139,6 @@ isoviz_gtf_to_psl = function(gtf_file_path, psl_output_file="converted_gtf.psl",
     if (nzchar(psl_line_str)) {
       # Write the line to the file
       writeLines(psl_line_str, con)
-      #cat("\n", file = con)
     }
   
   }
