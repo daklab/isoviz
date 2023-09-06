@@ -12,7 +12,7 @@ We are actively working to make improvements for Isoviz, so please let us know w
 
 ## Installation
 
-Note, the package has thus far been tested under R version 4.3.0. Before installing, please start a new R session to clear any pre-loaded packages that may interfere.
+Note, the package has thus far been tested under R version 4.3.0. Before installing, please start a new R session to clear any pre-loaded packages that may interfere. Please ensure that you also have GenomicFeatures and rtracklayer packages installed.
 
 You can install the development version of isoviz from [GitHub](https://github.com/) with:
 
@@ -98,11 +98,11 @@ We will first need to load our leafcutter junctions that we obtained by running 
 
 # load junctions for cell type of interest or input your own
 # replace with junctions <- "path/file.junc" to read in your own input
-junctions_hESC <- system.file("data", "hESC.junc", package="isoviz")
+junctions_hESC <- system.file("data", "hESC.junc.txt", package="isoviz")
 
 # additional junction files are available for A375 and HEK293
-junctions_A375 <- system.file("data", "A375.junc", package="isoviz")
-junctions_HEK293 <- system.file("data", "HEK293.junc", package="isoviz")
+junctions_A375 <- system.file("data", "A375.junc.txt", package="isoviz")
+junctions_HEK293 <- system.file("data", "HEK293.junc.txt", package="isoviz")
   
 # run minicutter to get clusters 
 intron_clusts <- isoviz_minicutter(juncs_file = junctions_hESC)

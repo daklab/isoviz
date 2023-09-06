@@ -8,6 +8,7 @@
 #' @param psl_output_file Name for the PSL file to be outputted. Default is "converted_gtf.psl"
 #' @param chrom_sizes Chrom sizes file for psl conversion, recommended
 #' @param filter_CDS if "yes" then will only include CDS exons in the PSL output file
+#' @param gtf_source "gencode" is default otherwise enter "nongencode" 
 #' @return psl formatted file
 #' @examples
 #' # Example with gtf file 
@@ -17,7 +18,8 @@
 
 isoviz_gtf_to_psl = function(gtf_file_path, 
                              psl_output_file="converted_gtf.psl", 
-                             filter_CDS="no",
+                             gtf_source = "gencode",
+                             filter_CDS = "no",
                              chrom_sizes=NULL){
   
   # Read the GTF file 
@@ -25,9 +27,14 @@ isoviz_gtf_to_psl = function(gtf_file_path,
   gr <- import.gff(gtf_file_path)
   gtf_data <- as.data.table(gr)
   
+  # Set options to avoid scientific notation
+  options(scipen = 999)
+  
   # Extract relevant columns
   print("Keeping only protein-coding and lncRNA genes")
-  gtf_data = dplyr::filter(gtf_data, gene_type %in% c("protein_coding", "lncRNA"))
+  
+  if(gtf_source == "gencode"){
+    gtf_data = dplyr::filter(gtf_data, gene_type %in% c("protein_coding", "lncRNA"))}
   
   # keep only the following columns 
   exons_df = gtf_data %>% dplyr::select(seqnames, type, start, end, 

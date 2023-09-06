@@ -6,6 +6,7 @@
 #'
 #' @param gtf_file_path User provided gtf file 
 #' @param output_file Name for the txt file to be outputted. Default is "gene_transcript_convert.txt"
+#' @param gtf_source "gencode" is default otherwise enter "nongencode" 
 #' @return table with gene ids, trancsript ids, names... 
 #' @examples
 #' # Example with gtf file 
@@ -13,12 +14,23 @@
 #' @name isoviz_get_gene_transcript_conversion
 #' @export
 
-isoviz_get_gene_transcript_conversion = function(gtf_file, output_file="gene_transcript_convert.txt"){
+isoviz_get_gene_transcript_conversion = function(gtf_file, 
+                                                 gtf_source = "gencode",
+                                                 output_file="gene_transcript_convert.txt"){
   
   gr <- import.gff(gtf_file)
   gtf_data <- as.data.table(gr)
-  print("Keeping only protein-coding and lncRNA genes")
-  gtf_data = dplyr::filter(gtf_data, gene_type %in% c("protein_coding", "lncRNA"))
+  
+  if(gtf_source == "gencode"){
+    print("Keeping only protein-coding and lncRNA genes")
+    gtf_data = dplyr::filter(gtf_data, gene_type %in% c("protein_coding", "lncRNA"))}
+  
+  if(gtf_source == "nongencode"){
+    gtf_data$gene_name = gtf_data$gene_id
+    gtf_data$transcript_name = gtf_data$transcript_id
+    gtf_data$gene_type = "protein_coding"
+    gtf_data$transcript_type = "protein_coding"
+  }
   
   # keep only the following columns 
   exons_df = gtf_data %>% dplyr::select(gene_id, transcript_id, gene_name,

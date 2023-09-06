@@ -29,6 +29,9 @@ isoviz_coords = function(file_path, gene_trans,
   print("Please ensure your input file is a PSL file~")
   genome_data <- fread(file_path)
   
+  # Set options to avoid scientific notation
+  options(scipen = 999)
+  
   genome_data$gene_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][2]})
   genome_data$trans_id = sapply(genome_data$V10, function(x){strsplit(x, "_")[[1]][1]})
   
@@ -45,6 +48,7 @@ isoviz_coords = function(file_path, gene_trans,
   # Need to do different adjustments here to get intron coords that will line up with leafcutter
   genome_data = genome_data %>% dplyr::select(chr, start, end, trans_id, gene_id,strand, blocksizes, blockstarts,
                                               transcript_length) %>% separate_rows(blocksizes, blockstarts)
+  
   genome_data$blockstarts=as.numeric(genome_data$blockstarts)
   genome_data$blocksizes=as.numeric(genome_data$blocksizes)
   genome_data$blockends = genome_data$blockstarts + genome_data$blocksizes

@@ -36,9 +36,9 @@ InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
           data/gencode_intron_all_data.rda,
           data/gencode_predictions.rda.gz,
-          data/hESC.junc,
-          data/A375.junc,
-          data/HEK293.junc,
+          data/hESC.junc.txt,
+          data/A375.junc.txt,
+          data/HEK293.junc.txt,
           figures/isoviz_logo.png,
           figures/readme_main.png
 RoxygenNote: 7.2.3
