@@ -1,7 +1,7 @@
 Package: isoviz
 Type: Package
 Title: Visualize transcript isoforms alongside exon-exon junction counts
-Version: 0.1.4
+Version: 0.1.5
 Author: Karin Isaev and Megan Schertzer
 Maintainer: <kisaev@nygenome.org>
 Description: Visualize which junctions are being utilized alongside annotated
@@ -34,12 +34,11 @@ Suggests:
 VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
-          data/hESC-MKNK2-G1_v41_basic.junc,
-          data/a375-total_Aligned.q20.sort.junc,
           data/gencode_intron_all_data.rda,
           data/gencode_predictions.rda.gz,
-          data/22a_a375-total_regtools.txt,
-          data/23b_hek293-wt_v41_regtools.txt,
+          data/hESC.junc,
+          data/A375.junc,
+          data/HEK293.junc,
           figures/isoviz_logo.png,
           figures/readme_main.png
 RoxygenNote: 7.2.3

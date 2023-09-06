@@ -1,21 +1,13 @@
 #' A function for mapping junctions to transcript isoforms
 #' @param gene_intron_coords obtained intron coordinates for gene of interest
 #' @param leafcutter_input output from running isoviz_minicutter
-#' @param cell_type cell type of interest, default=hESC
+#' @param cell_type cell type of interest, default=hESC other options are A375 and HEK293
 #' @param gencode_intron_all_data expanded annotations of introns/transcripts
 #' @return mapping
 #' @examples
 #' isoviz_map_junctions()
 #' @name isoviz_map_junctions
 #' @export
-
-#library(data.table)
-#library(plyr)
-#library(GenomicFeatures)
-#library(tidyr)
-
-#gene_intron_coords = gene_introns
-#leafcutter_input = intron_clusts
 
 # map junctions function
 isoviz_map_junctions = function(cell_type = "hESC", gene_intron_coords, leafcutter_input, gencode_intron_all_data){

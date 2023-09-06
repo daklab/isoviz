@@ -98,17 +98,21 @@ We will first need to load our leafcutter junctions that we obtained by running 
 
 # load junctions for cell type of interest or input your own
 # replace with junctions <- "path/file.junc" to read in your own input
-junctions <- system.file("data", "21c_hESC_RB2_empty_v41_basic.junc", package="isoviz")
+junctions_hESC <- system.file("data", "hESC.junc", package="isoviz")
 
+# additional junction files are available for A375 and HEK293
+junctions_A375 <- system.file("data", "A375.junc", package="isoviz")
+junctions_HEK293 <- system.file("data", "HEK293.junc", package="isoviz")
+  
 # run minicutter to get clusters 
-intron_clusts <- isoviz_minicutter(juncs_file = junctions)
+intron_clusts <- isoviz_minicutter(juncs_file = junctions_hESC)
 ```
 
 We have additional pre-loaded junction and isoform information here:
 
 ``` r
 # For now we will use the expanded intron dataset with additional annotations by Megan 
-# We will need an additional function to add these annotations 
+# We will need an additional function to generate these annotations 
 intron_annotations <- system.file("data", "gencode_intron_all_data.rda", package="isoviz")
 load(intron_annotations)
 ```

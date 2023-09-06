@@ -17,7 +17,6 @@
 
 isoviz_gtf_to_psl = function(gtf_file_path, 
                              psl_output_file="converted_gtf.psl", 
-                             specie="human", 
                              filter_CDS="no",
                              chrom_sizes=NULL){
   

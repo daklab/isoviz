@@ -33,7 +33,7 @@ We start off by loading our exon and intron coordinates for all transcripts. By 
 file_path <- system.file("data", "gencode.v41.basic.annotation.psl", package="isoviz")
 gene_trans <- system.file("data", "gencode_v41_gene_transcript_convert.txt", package="isoviz")
 
-all_coordinates <- isoviz_coords(file_path, gene_trans, input_type="psl") #use default genome .psl file  
+all_coordinates <- isoviz_coords(file_path, gene_trans) #use default genome .psl file  
 
 # if you want to use your own psl or gtf file (including output from a long read sequencing experiment), use this code
 #file_path <- "" # input your path here for the gtf/psl file
@@ -61,7 +61,11 @@ We will first need to load our leafcutter junctions that we obtained by running 
 
 ```{r}
 # load junctions for cell type of interest or input your own
-junctions <- system.file("data", "21c_hESC_RB2_empty_v41_basic.junc", package="isoviz")
+junctions <- system.file("data", "hESC.junc", package="isoviz")
+
+# junction files also available for A375 and HEK293
+# junctions <- system.file("data", "A375.junc", package="isoviz")
+# junctions <- system.file("data", "HEK293.junc", package="isoviz")
 
 # run minicutter to get clusters 
 intron_clusts <- isoviz_minicutter(juncs_file = junctions)
