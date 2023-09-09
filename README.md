@@ -1,4 +1,4 @@
-# Isoviz <img src="inst/figures/isoviz_logo.png" align="right" height="139"/>
+# Isoviz <img src="inst/figures/isoviz_logo_new" align="right" height="139"/>
 
 <!-- badges: start -->
 
