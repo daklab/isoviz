@@ -7,7 +7,8 @@
 isoviz_gtf_to_psl(
   gtf_file_path,
   psl_output_file = "converted_gtf.psl",
-  specie = "human",
+  gtf_source = "gencode",
+  filter_CDS = "no",
   chrom_sizes = NULL
 )
 }
@@ -15,6 +16,10 @@ isoviz_gtf_to_psl(
 \item{gtf_file_path}{User provided gtf file}
 
 \item{psl_output_file}{Name for the PSL file to be outputted. Default is "converted_gtf.psl"}
+
+\item{gtf_source}{"gencode" is default otherwise enter "nongencode"}
+
+\item{filter_CDS}{if "yes" then will only include CDS exons in the PSL output file}
 
 \item{chrom_sizes}{Chrom sizes file for psl conversion, recommended}
 }

@@ -169,7 +169,7 @@ isoviz_plot_juncs_to_iso(mapped_junctions, gene_exons, gene_introns,
 
 ```
 
-Step 5: Guide Predictions Finally, if you are interested in obtaining a list of gRNAs that you could use to target specific junctions with Cas13, you can do the following:
+Step 5: Guide Predictions. Finally, if you are interested in obtaining a list of gRNAs that you could use to target specific junctions with Cas13, you can do the following:
 
 ```{r}
 #library(flextable)

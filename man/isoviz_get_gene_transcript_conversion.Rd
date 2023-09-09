@@ -6,11 +6,14 @@
 \usage{
 isoviz_get_gene_transcript_conversion(
   gtf_file,
+  gtf_source = "gencode",
   output_file = "gene_transcript_convert.txt"
 )
 }
 \arguments{
-\item{output_file}{Name for the PSL file to be outputted. Default is "converted_gtf.psl"}
+\item{gtf_source}{"gencode" is default otherwise enter "nongencode"}
+
+\item{output_file}{Name for the txt file to be outputted. Default is "gene_transcript_convert.txt"}
 
 \item{gtf_file_path}{User provided gtf file}
 }

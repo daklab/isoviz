@@ -12,7 +12,7 @@ isoviz_map_junctions(
 )
 }
 \arguments{
-\item{cell_type}{cell type of interest, default=hESC}
+\item{cell_type}{cell type of interest, default=hESC other options are A375 and HEK293}
 
 \item{gene_intron_coords}{obtained intron coordinates for gene of interest}
 
