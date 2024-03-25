@@ -193,7 +193,7 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
   introns = as.data.table(introns)
   #introns = introns[order(cluster_idx)] #, junc.usage)]
   if(strand == "+"){
-    introns = introns[order(desc(junc_id)), ]
+    introns = introns[order(junc_id, decreasing = TRUE), ]
   }
   
   if(strand == "-"){
