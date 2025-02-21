@@ -20,7 +20,7 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
 
   print("Loading gencode sgRNA prediction file")
   # 1. load most up-to-date gencode_predictions file (this will be updated)
-  gencode_predictions <- system.file("data", "230828_gencodev41_final_TIGER_predictions_to_compare.rda.gz", package="isoviz")
+  gencode_predictions <- system.file("data", "250221_gencodev41_updated_TIGER_predictions_to_compare.rda.gz", package="isoviz")
   gencode_predictions <- gzfile(gencode_predictions, "rb")
   load(gencode_predictions)
   gencode_predictions = tiger_pred_out

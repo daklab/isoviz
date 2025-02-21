@@ -35,7 +35,7 @@ VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
           data/gencode_intron_all_data.rda,
-          data/230828_gencodev41_final_TIGER_predictions_to_compare.rda.gz,
+          data/250221_gencodev41_updated_TIGER_predictions_to_compare.rda.gz,
           data/hESC.junc.txt,
           data/A375.junc.txt,
           data/HEK293.junc.txt,
