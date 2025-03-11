@@ -27,7 +27,8 @@ Depends:
     GenomicFeatures,
     progress,
     R.utils,
-    rtracklayer
+    rtracklayer,
+    flextable (>= 0.9.1)
 Suggests: 
     knitr,
     rmarkdown
@@ -35,10 +36,10 @@ VignetteBuilder: knitr
 InstData: data/gencode_v41_gene_transcript_convert.txt,
           data/gencode.v41.basic.annotation.psl,
           data/gencode_intron_all_data.rda,
-          data/250221_gencodev41_updated_TIGER_predictions_to_compare.rda.gz,
+          data/250311_gencodev41_updated_TIGER_predictions_to_compare.rda.gz,
           data/hESC.junc.txt,
           data/A375.junc.txt,
           data/HEK293.junc.txt,
           figures/isoviz_logo_new.png,
           figures/readme_main.png
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1

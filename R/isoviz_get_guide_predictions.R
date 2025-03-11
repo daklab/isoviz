@@ -20,10 +20,10 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
 
   print("Loading gencode sgRNA prediction file")
   # 1. load most up-to-date gencode_predictions file (this will be updated)
-  gencode_predictions <- system.file("data", "250221_gencodev41_updated_TIGER_predictions_to_compare.rda.gz", package="isoviz")
+  gencode_predictions <- system.file("data", "250311_gencodev41_updated_TIGER_predictions_to_compare.rda.gz", package="isoviz")
   gencode_predictions <- gzfile(gencode_predictions, "rb")
   load(gencode_predictions)
-  gencode_predictions = tiger_pred_out
+  gencode_predictions = isoviz_pred_table
 
   # ranking of prediction score -> values 0 to 1
   # min_score = min(gencode_predictions$predicted_lfc)
@@ -43,7 +43,9 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
   juncs_recluster = leafcutter_input
   juncs_recluster %<>% dplyr::select(everything(), junc.counts = readcount, Usage = usage_ratio) %>% dplyr::group_by(cluster_idx) %>%
     dplyr::mutate(cluster.counts = sum(junc.counts), Usage = round(Usage, 2)) %>% ungroup()
-
+  
+  #juncs_recluster %>% filter(chrom == "chr19", start == "2039856")
+  # 2039856	2040134
   all_guide_info = filtered_predictions %>%
     left_join(juncs_recluster, by = c("chr" = "chrom", "start", "end", "strand")) %>%
     arrange(junc_id, TIGER_score)
@@ -52,7 +54,7 @@ isoviz_get_guide_predictions = function(gene = "ENSG00000100320", cell_type = "h
   filtered_guide_info = all_guide_info %>% dplyr::group_by(junc_id) %>% slice_max(TIGER_score, n = guides_per_junction) %>% ungroup()
   filtered_guide_info$Transcripts <- gsub(paste0(gene_name, "-"), "", filtered_guide_info$transcript_isoforms)
   filtered_guide_info %<>% dplyr::select(Cluster = cluster_idx, JuncID = junc_id, Category = junction_category, Transcripts, Counts = junc.counts, Usage,
-                                  GuideSeq = guide_sequence, TIGER_score)
+                                  GuideSeq = guide_sequence, TIGER_score, TargetSeq = target_sequence_50bp, Filtered)
   filtered_guide_info %<>% dplyr::mutate(Counts = ifelse(is.na(Counts), 0, Counts))
   #print(head(filtered_guide_info))
   print("Closed gencode sgRNA prediction file")

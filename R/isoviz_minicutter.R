@@ -91,7 +91,7 @@ leafcutter_one_step = function(juncs) {
 
 isoviz_minicutter = function(juncs_file, min_junction_reads=1, plot_summary=TRUE, min_usage_ratio=0.001) {
 
-  juncs = fread(juncs_file)
+  juncs = fread(juncs_file, colClasses = c("V11" = "character", "V12" = "character"))
 
   # add column names via https://regtools.readthedocs.io/en/latest/commands/junctions-extract/
   colnames(juncs) = c("chrom", "start", "end", "junc.name", "score", "strand", "thickStart", "thickEnd",
@@ -99,7 +99,7 @@ isoviz_minicutter = function(juncs_file, min_junction_reads=1, plot_summary=TRUE
 
   juncs = juncs %>%
     filter(score >= min_junction_reads) %>%
-    separate(blockSizes, into = c("five.p", "three.p"), sep = ",") %>%
+    separate(blockSizes, into = c("five.p", "three.p"), sep = ",", fill = "right") %>%
     mutate(five.p = as.integer(five.p), three.p = as.integer(three.p)) %>%
     mutate(start = start + five.p, end = end - three.p + 1) %>%
     dplyr::select(chrom = chrom, start, end, name = junc.name, readcount = score, strand = strand)
