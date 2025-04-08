@@ -23,7 +23,7 @@
 #gene_data=gene_exons
 #df = output
 
-isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
+isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data, # gene_exons, gene_introns, would be param names... 
                                     gene_introns,
                                     cell_type = "hESC",
                                     junc_usage = 5,
@@ -45,7 +45,6 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data,
   if(length(include_specific_junctions) != 0){
     df %<>% filter(junc_id %in% include_specific_junctions)
   }
-
 
   # filter based on junction usage
   df = dplyr::filter(df, junc.usage >= junc_usage)

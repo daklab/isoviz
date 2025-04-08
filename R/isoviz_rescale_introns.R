@@ -39,6 +39,8 @@ isoviz_rescale_introns = function(introns, exons,
   start_pos = unique(exons[,c("start", "transcript_name")])[order(start)][1]
   starts = unique(exons[,c("start", "end", "transcript_name", "transcript_length")])[order(start)]
 
+  # print which transcript gets chosen as the reference 
+
   if(strand == "-"){
     new_ends = introns$intron_starts
     new_starts = introns$intron_ends
@@ -65,7 +67,7 @@ isoviz_rescale_introns = function(introns, exons,
 
   z = which(starts$start == starts$start[1])
   starts$new_starts = ""
-  starts$new_starts[z] = 0 #0 only if the start is the same as gene start
+  starts$new_starts[z] = 0 #0 only if the start is the same as gene start this is exons? 
 
   # All transcripts that start with start_pos$start will get a new_blockstart set to 0
   z = which(exons$blockstarts == start_pos$start)
@@ -82,6 +84,7 @@ isoviz_rescale_introns = function(introns, exons,
   ex_g$new_start[z] = 0
 
   # Find reference transcript --> longest transcript with blockstart=0
+  # Print refernece trancsript that's chosen s
   if(strand == "-"){
     ref_transcript = filter(starts, new_starts == 0)[order(end)]$transcript_name[1] #if strand is - need to change if strand is +
   }
