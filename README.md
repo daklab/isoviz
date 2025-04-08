@@ -12,13 +12,14 @@ We are actively working to make improvements for Isoviz, so please let us know w
 
 ## Installation
 
-Note, the package has thus far been tested under R version 4.4.1. Before installing, please start a new R session to clear any pre-loaded packages that may interfere. Please ensure that you also have GenomicFeatures and rtracklayer packages installed.
+Note, the package has thus far been tested under R version 4.4.1. Before installing, please start a new R session to clear any pre-loaded packages that may interfere. Please ensure that you also have 'GenomicFeatures' and 'rtracklayer' packages installed.
 
 You can install the development version of isoviz from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("daklab/isoviz")
+library(isoviz)
 ```
 
 Alternatively, you can do the following:

@@ -148,28 +148,48 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data, # gene_exons, g
 
     introns$length = abs(introns$intron_ends - introns$intron_starts)
     introns$rescaled_length = introns$length / intron_scale_width
+    to_plot_ordered[, exon_number := seq_len(.N), by = transcript_name]
 
     # merge with exon data to map new start and end points
     if(strand == "-"){
-      get_coords = unique(to_plot_ordered[,c("new_e_start", "old_e_start", "transcript_name")])
+      get_coords = unique(to_plot_ordered[,c("new_e_start", "old_e_start", "transcript_name", "exon_number")])
       colnames(get_coords)[2] = "new_intron_end"
       introns$new_intron_end = introns$intron_ends
       get_coords = unique(merge(introns, get_coords, by=c("transcript_name", "new_intron_end")))
-
-      # for each junction just want one set of coordinates for start and end
-      # so new_intron_end is old_exon_start
+  
+      # Assign the final new intron end (from current exon)
       get_coords$new_intron_end = get_coords$new_e_start
-      get_coords$new_intron_start = get_coords$new_intron_end - get_coords$rescaled_length}
+
+      # Create prev exon lookup
+      prev_exon_coords = to_plot_ordered[, .(transcript_name, exon_number, new_e_end)]
+      prev_exon_coords[, exon_number := exon_number + 1]  # shift up so it matches current exon
+
+      # Now merge to attach previous exon’s end as new intron start
+      get_coords = merge(get_coords, prev_exon_coords,
+                   by = c("transcript_name", "exon_number"),
+                   all.x = TRUE)
+
+      # assign final coordinate
+      get_coords$new_intron_start = get_coords$new_e_end}
 
     if(strand == "+"){
-        get_coords = unique(to_plot_ordered[,c("new_e_end", "old_e_end", "transcript_name")])
-        colnames(get_coords)[2] = "new_intron_start"
-        introns$new_intron_start = introns$intron_starts
-        get_coords = unique(merge(introns, get_coords, by=c("transcript_name", "new_intron_start")))
+      # Get current exon (for start of intron)
+      get_coords = unique(to_plot_ordered[, .(new_e_end, old_e_end, transcript_name, exon_number)])
+      colnames(get_coords)[2] = "new_intron_start"
+      introns$new_intron_start = introns$intron_starts
+      get_coords = unique(merge(introns, get_coords, by = c("transcript_name", "new_intron_start")))
 
-        # for each junction just want one set of coordinates for start and end
-        get_coords$new_intron_start = get_coords$new_e_end
-        get_coords$new_intron_end = get_coords$new_intron_start + get_coords$rescaled_length}
+      # Final new intron start = current exon's end
+      get_coords$new_intron_start = get_coords$new_e_end
+
+      # Get next exon (for end of intron)
+      next_exon_coords = to_plot_ordered[, .(transcript_name, exon_number, new_e_start)]
+      next_exon_coords[, exon_number := exon_number - 1]  # shift down to match current exon
+
+      # Merge and assign intron end
+      get_coords = merge(get_coords, next_exon_coords, by = c("transcript_name", "exon_number"), all.x = TRUE)
+      get_coords$new_intron_end = get_coords$new_e_start
+    }
 
     introns = get_coords
     introns$intron_starts = introns$new_intron_start
@@ -219,7 +239,7 @@ isoviz_plot_juncs_to_iso = function(mapped_junctions, gene_data, # gene_exons, g
     geom_text(data = introns, aes(x = intron_ends, y = junc.order, label = text_plot), hjust = "inward", size = 3) +
     scale_fill_manual(values = mycols) +
     xlim(min_start, max_end) + theme_bw() +
-    xlab("Hg38 Genomic Position (bp)") + ylab("") +
+    xlab("Genomic Position (bp)") + ylab("") +
     geom_text(data = introns, aes(x = Inf, y = junc.order, hjust = -0.1, label = junc_id), size = 3) +
     theme(axis.text.y=element_blank(), axis.ticks.y=element_blank(), legend.position = "none", plot.margin = margin(0,1,0,0.1, "in")) +
     coord_cartesian(xlim = c(min_start, max_end), clip = 'off')}
