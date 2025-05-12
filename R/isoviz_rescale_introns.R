@@ -33,7 +33,6 @@ isoviz_rescale_introns = function(introns, exons,
   
   # very important to consider strand!
   strand = introns$strand[1]
-  print(strand)
 
   # order transcripts to figure out which is the reference/starting transcript
   start_pos = unique(exons[,c("start", "transcript_name")])[order(start)][1]
@@ -65,9 +64,25 @@ isoviz_rescale_introns = function(introns, exons,
   if(strand == "-"){
     starts = starts[order(-start)]}
 
-  z = which(starts$start == starts$start[1])
+  # Add number of exons per transcript
+  exon_counts = exons %>%
+    dplyr::group_by(transcript_name) %>%
+    dplyr::summarize(num_exons = n())
+
+  # Merge exon counts to start table
+  starts = left_join(starts, exon_counts, by = "transcript_name")
+
+  # Count how many transcripts share each start position
+start_counts = starts %>%
+  dplyr::group_by(start) %>%
+  dplyr::summarize(n_transcripts = dplyr::n())
+
+# Join with starts metadata
+starts = starts %>%
+  dplyr::left_join(start_counts, by = "start")
+
+    z = which(starts$start == starts$start[1])
   starts$new_starts = ""
-  starts$new_starts[z] = 0 #0 only if the start is the same as gene start this is exons? 
 
   # All transcripts that start with start_pos$start will get a new_blockstart set to 0
   z = which(exons$blockstarts == start_pos$start)
@@ -81,24 +96,41 @@ isoviz_rescale_introns = function(introns, exons,
   colnames(ex_g)[1:3] = c("chr", "start", "end")
   z = which(ex_g$start == start_pos$start)
   ex_g$new_start = ""
-  ex_g$new_start[z] = 0
 
+# Strand-aware choice of most frequent upstream start
+if (strand == "+") {
+  most_shared_start = starts %>%
+    dplyr::arrange(desc(n_transcripts), start) %>%
+    dplyr::slice(1) %>%
+    dplyr::pull(start)
+}
+
+if (strand == "-") {
+  most_shared_start = starts %>%
+    dplyr::arrange(desc(n_transcripts), desc(start)) %>%
+    dplyr::slice(1) %>%
+    dplyr::pull(start)
+}
+
+# Now filter candidates and choose best scoring reference transcript
+ref_transcript = starts %>%
+  dplyr::filter(start == most_shared_start) %>%
+  dplyr::arrange(desc(num_exons), desc(transcript_length)) %>%
+  dplyr::pull(transcript_name) %>%
+  .[1]
+
+cat("Ref transcript:", ref_transcript, "\n")
   # Find reference transcript --> longest transcript with blockstart=0
   # Print refernece trancsript that's chosen s
-  if(strand == "-"){
-    ref_transcript = filter(starts, new_starts == 0)[order(end)]$transcript_name[1] #if strand is - need to change if strand is +
-  }
-  if(strand == "+"){
-    ref_transcript = filter(starts, new_starts == 0)[order(-end)]$transcript_name[1]
-  }
 
   # Internal function for changing exon coordinates within each transcript
-  # according to corresponding introns reduced lengths
+  # according to corresponding introns reduced lengths (update!!!)
+  # incorrect to use intron reduced lengths because they are just relative
+  # while actual exonic coordinates need to be conserved 
 
   .get_rescaled_txs = function(trans_name, ref="ref", ref_trans="none") {
     introns_shortened = filter(int_g, transcript_name == trans_name)
     exons_remake = filter(ex_g, transcript_name == trans_name)
-    print(trans_name)
     # ensure that everything is ordered correctly
     if (strand == "-"){
       introns_shortened = introns_shortened[order(-start)]
@@ -183,51 +215,70 @@ isoviz_rescale_introns = function(introns, exons,
 
   # for rows that missing new start and end need to find their nearest exons that do have it
   # and use scaled introns coords to fix it
-  nas = filter(ref_attach_to, is.na(new_e_start))
+nas = filter(ref_attach_to, is.na(new_e_start))
+if(!(dim(nas)[1] == 0)){
 
-  if(!(dim(nas)[1] == 0)){
+  z = which(is.na(ref_attach_to$new_e_start))
+  ref_attach_to = ref_attach_to[-z,]
+  nas = nas[order(-exon_num)]
 
-    z = which(is.na(ref_attach_to$new_e_start))
-    ref_attach_to = ref_attach_to[-z,]
-    nas = nas[order(-exon_num)]
+  for(i in 1:nrow(nas)) {
+    trans = nas$transcript_name[i]
+    exon_start = nas$start[i]
+    exon_end = nas$end[i]
 
-    for(i in 1:nrow(nas)){
-      trans = nas$transcript_name[i]
-      exons = filter(ref_attach_to, transcript_name == trans) #all the non NA exons
-      exon_n = nas$exon_num[i]
+    # Look for same start in other transcripts
+    matched_start = ref_attach_to %>% filter(start == exon_start & !is.na(new_e_start)) %>% pull(new_e_start)
+    matched_end = ref_attach_to %>% filter(end == exon_end & !is.na(new_e_end)) %>% pull(new_e_end)
+
+    if (length(matched_start) > 0) {
+      nas$new_e_start[i] = matched_start[1]
+      nas$new_e_end[i] = nas$new_e_start[i] + nas$blocksizes[i]
+      ref_attach_to = rbind(ref_attach_to, nas[i])
+    } else if (length(matched_end) > 0) {
+      nas$new_e_end[i] = matched_end[1]
+      nas$new_e_start[i] = nas$new_e_end[i] - nas$blocksizes[i]
+      ref_attach_to = rbind(ref_attach_to, nas[i])
+    } else {
+      # Use intron-based position estimation
       introns_shortened = filter(int_g, transcript_name == trans)
-      if (strand == "-"){
-        introns_shortened = introns_shortened[order(-start)]
-        exons = exons[order(-start)]}
-      if (strand == "+"){
-        introns_shortened = introns_shortened[order(start)]
-        exons = exons[order(start)]}
+      introns_shortened = introns_shortened[order(ifelse(strand == "-", -start, start))]
       introns_shortened$intron_num = 1:nrow(introns_shortened)
 
-      # get rescaled length of NA exon and next exon
-      val_intron = filter(introns_shortened, intron_num == exon_n)$rescaled_length
-      next_start = filter(exons, exon_num == exon_n + 1)$new_e_start
+      prev_exons = ref_attach_to %>%
+        filter(transcript_name == trans) %>%
+        arrange(exon_num)
 
-      if(length(val_intron)==0){ #most likely last exon
-        val_intron = filter(introns_shortened, intron_num == exon_n-1)$rescaled_length
-        prev_end = filter(exons, exon_num == exon_n -1)$new_e_end #actually previous end
-        if(!(is.na(prev_end))){
-          new_e_start = prev_end + val_intron
-          nas$new_e_start[i]= new_e_start
-          nas$new_e_end[i] = nas$new_e_start[i] + nas$blocksizes[i]
-          ref_attach_to = rbind(ref_attach_to, nas[i])
-        }
-      }
+      exon_n = nas$exon_num[i]
 
-      if(!(length(next_start)==0)){
-        new_e_ending = next_start - val_intron
-        nas$new_e_end[i]= new_e_ending
+      # Case 1: Between exons (use previous exon end + intron)
+      if (exon_n > 1 && (exon_n - 1) <= nrow(prev_exons)) {
+        prev_end = prev_exons$new_e_end[exon_n - 1]
+        intron_len = introns_shortened$rescaled_length[exon_n - 1]
+        nas$new_e_start[i] = prev_end + intron_len
+        nas$new_e_end[i] = nas$new_e_start[i] + nas$blocksizes[i]
+        ref_attach_to = rbind(ref_attach_to, nas[i])
+
+      # Case 2: Before known exon (use next exon start - intron)
+      } else if (exon_n <= nrow(introns_shortened)) {
+        next_exon = prev_exons$new_e_start[exon_n + 1]
+        intron_len = introns_shortened$rescaled_length[exon_n]
+        nas$new_e_end[i] = next_exon - intron_len
         nas$new_e_start[i] = nas$new_e_end[i] - nas$blocksizes[i]
-        ref_attach_to = rbind(ref_attach_to, nas[i])}
+        ref_attach_to = rbind(ref_attach_to, nas[i])
+
+         # 🔥 New Case 3: Last exon beyond known range — extend from last exon
+        }  else if (exon_n > nrow(prev_exons)) {
+    last_exon_end = max(prev_exons$new_e_end, na.rm = TRUE)
+    last_intron_len = introns_shortened$rescaled_length[exon_n - 1]
+    nas$new_e_start[i] = last_exon_end + last_intron_len
+    nas$new_e_end[i] = nas$new_e_start[i] + nas$blocksizes[i]
+  }
+    ref_attach_to = rbind(ref_attach_to, nas[i])
     }
-
-  } # (!(dim(nas)[1] == 0))
-
+  }
+}
+ # (!(dim(nas)[1] == 0))
   ref_attach_to$new_start = NULL
   ref = ref %>% dplyr::select(chr, start, end, strand, blocksizes, transcript_name, new_e_start, new_e_end, exon_num)
   ref_attach_to = rbind(ref_attach_to, ref)
@@ -236,7 +287,6 @@ isoviz_rescale_introns = function(introns, exons,
   max_exons = ref_attach_to %>% dplyr::group_by(transcript_name) %>% dplyr::summarize(max_end = max(new_e_end))
 
   trans_lengths = merge(min_starts, max_exons)
-
   ref_attach_to = merge(ref_attach_to, trans_lengths)
   ref_attach_to$transcript_length = ref_attach_to$max_end - ref_attach_to$min_start   # max exon end and min exon start for each transcript
   return(list(ref_attach_to, int_g))
